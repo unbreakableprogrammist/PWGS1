@@ -31,7 +31,39 @@ HWND app_2048::create_window() { // nadpisujemy funkcje create_window, ktora bed
 		s_class_name.c_str(), // lpClassName - nazwa klasy okna, czyli tej klasy, ktora chcemy stworzyc
 		L"2048", // lpWindowName - tytul okna, czyli tekst wyswietlany na pasku tytulu okna
 		WS_OVERLAPPED | WS_SYSMENU | WS_CAPTION | WS_BORDER | WS_MINIMIZEBOX, // dwStyle - styl okna, WS_OVERLAPPEDWINDOW - standardowy styl okna z ramką, paskiem tytułu, WS_SYSMENU - okno ma menu systemowe (ikona w lewym górnym rogu), WS_CAPTION - okno ma pasek tytułu, WS_BORDER - okno ma ramkę, WS_MINIMIZEBOX - okno ma przycisk minimalizacji
-		CW_USEDEFAULT, CW_USEDEFAULT, // x, y - pozycja okna na ekranie, CW_USEDEFAULT - system sam wybierze domyślną pozycję
-		CW_USEDEFAULT, CW_USEDEFAULT, // nWidth, nHeight - rozmiar okna, CW_USEDEFAULT - system sam wybierze domyślny rozmiar
+		CW_USEDEFAULT, 0, // x, y - pozycja okna na ekranie, CW_USEDEFAULT - system sam wybierze domyślną pozycję
+		CW_USEDEFAULT, 0, // nWidth, nHeight - rozmiar okna, CW_USEDEFAULT - system sam wybierze domyślny rozmiar
 		nullptr, nullptr, m_instance, this); // hWndParent - uchwyt do okna nadrzędnego (jeśli jest), nullptr - brak nadrzędnego okna; hMenu - uchwyt do menu (jeśli jest), nullptr - brak menu; hInstance - uchwyt do instancji aplikacji; lpParam - dodatkowe dane przekazywane do funkcji obsługi zdarzeń (jeśli są), this - przekazujemy wskaźnik do bieżącego obiektu klasy app_2048, który będzie dostępny w funkcji obsługi zdarzeń, dzięki czemu będziemy mogli odwoływać się do danych i metod tego obiektu w tej funkcji
+}
+
+LRESULT CALLBACK app_2048::window_proc_static( // LRESULT CALLBACK - windows zwraca nam result za kazdym razem jak uzytkownik cos zrobi
+	HWND window, // uchwyt do okna, czyli identyfikator okna, ktory jest przekazywany przez system operacyjny do funkcji obslugi zdarzen, gdy wystapi zdarzenie zwiazane z tym oknem
+	UINT message, // kod zdarzenia, czyli liczba calkowita reprezentujaca rodzaj zdarzenia, np klikniecie myszka, nacisniecie klawisza, itp
+	WPARAM wparam, // zmienne na argumety szczegolowe dotyczace zdarzenia, np kod klawisza, pozycja kursora, itp
+	LPARAM lparam)
+{
+	app_2048* app = nullptr; // tworzymy wskaznik do obiektu klasy app_2048, ktory bedzie przechowywal informacje o tym, ktory obiekt klasy app_2048 jest zwiazany z danym oknem gry, czyli ktory obiekt jest odpowiedzialny za obsluge zdarzen zwiazanych z tym oknem gry
+	// Ten komunikat przychodzi tylko raz, w momencie "narodzin" okna
+	if (message == WM_NCCREATE)
+	{
+		// Wyciągamy nasz wskaźnik "this" ukryty w lparam przez CreateWindowExW
+		CREATESTRUCTW* create = reinterpret_cast<CREATESTRUCTW*>(lparam);
+		app = static_cast<app_2048*>(create->lpCreateParams);
+
+		// "Przyklejamy" ten wskaźnik do naszego okna na stałe
+		SetWindowLongPtrW(window, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(app));
+	}
+	else 
+	{
+		// dla innego po prostu odczytujemy to co "przykleiliśmy" wcześniej do okna (przy tworzeniu okna)
+		app = reinterpret_cast<app_2048*>(GetWindowLongPtrW(window, GWLP_USERDATA));
+	}
+	//Jeśli udało się znaleźć nasz obiekt, przekazujemy mu komunikat
+	if (app != nullptr)
+	{
+		return app->window_proc(window, message, wparam, lparam);
+	}
+
+	// 5. Jeśli nie (np. przed przypisaniem wskaźnika), niech Windows zajmie się tym sam
+	return DefWindowProcW(window, message, wparam, lparam);
 }
