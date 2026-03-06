@@ -67,3 +67,20 @@ LRESULT CALLBACK app_2048::window_proc_static( // LRESULT CALLBACK - windows zwr
 	// 5. Jeśli nie (np. przed przypisaniem wskaźnika), niech Windows zajmie się tym sam
 	return DefWindowProcW(window, message, wparam, lparam);
 }
+
+LRESULT app_2048::window_proc(
+	HWND window,
+	UINT message,
+	WPARAM wparam,
+	LPARAM lparam)
+{
+	switch (message)
+	{
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		return 0;
+	}
+
+	// Jeśli komunikat nas nie interesuje, oddajemy go systemowi Windows
+	return DefWindowProcW(window, message, wparam, lparam);
+}
