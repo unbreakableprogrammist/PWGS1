@@ -69,18 +69,65 @@ LRESULT CALLBACK app_2048::window_proc_static( // LRESULT CALLBACK - windows zwr
 }
 
 LRESULT app_2048::window_proc(
-	HWND window,
-	UINT message,
-	WPARAM wparam,
-	LPARAM lparam)
+	HWND window, UINT message, WPARAM wparam, LPARAM lparam // message typ, lparam , wparam. zalezy od zdarzenia ktore robi co
+)
 {
-	switch (message)
-	{
-	case WM_DESTROY:
-		PostQuitMessage(0);
+	switch (message) {
+		// dodanie obslugi klawiszy:
+	case WM_KEYDOWN:  // wciśnięcie klawisza
+		switch (wparam) {  // wparam to kod klawisza
+		case VK_UP:    // strzałka w górę
+			SetWindowTextW(window, L"Wcisnąłeś górę!"); /// Zmiana tytul okna
+			return 0;
+		case VK_DOWN:
+			SetWindowTextW(window, L"Wcisnąłeś dół!");
+			return 0;
+		case VK_LEFT:
+			return 0;
+		case VK_RIGHT:
+			return 0;
+		}
+		return 0;
+		// lewy przycisk myszy
+	case WM_LBUTTONDOWN: {
+		MessageBoxW(window, L"Kliknąłeś!", L"Tytuł", MB_OK); // MessageBox
+		MessageBeep(MB_OK); // dzwiek
+		int x = LOWORD(lparam); // LOWORD mlodsze bity (0 - 32)
+		int y = HIWORD(lparam); // starsze (33 - 64)
+		HDC hdc = GetDC(window);        // uchwyt do "płótna" okna
+		Ellipse(hdc, x - 10, y - 10, x + 10, y + 10);  // kółko w miejscu kliknięcia
+		ReleaseDC(window, hdc);         // zawsze zwalniaj!
 		return 0;
 	}
 
-	// Jeśli komunikat nas nie interesuje, oddajemy go systemowi Windows
-	return DefWindowProcW(window, message, wparam, lparam);
+	case WM_CLOSE: // uzytkownik kliknal X
+		DestroyWindow(window);
+		return 0;
+	case WM_DESTROY: // przychodzi po DestroyWindow
+		if (window == m_main) // czy window to m_main
+			PostQuitMessage(EXIT_SUCCESS);
+		return 0;
+	}
+	return DefWindowProcW(window, message, wparam, lparam); // oddanie kontroli Windowsowi
+}
+
+// konstuktor klasy, 
+app_2048::app_2048(HINSTANCE instance) : m_instance{ instance }, m_main{}
+{
+	register_class(); // rejestruje klase okna - jak ma wygladac i zachowywac sie okno
+	m_main = create_window(); // tworzy okno i zapisuje jego uchwyt
+}
+
+int app_2048::run(int show_command) { // glowna petla aplikacji
+	ShowWindow(m_main, show_command); // Pokazuje okno
+	MSG msg{};
+	BOOL result = TRUE;
+	while ((result = GetMessageW(&msg, nullptr, 0, 0)) != 0) { // czeka na kolejne zdarzenie i zapisuje je do msg, result = 0 <=> PostQuitMessage()
+		if (result == -1)
+			return EXIT_FAILURE;
+
+		TranslateMessage(&msg); // czyta klawisze
+		DispatchMessageW(&msg); // wysyla zdarzenie do window_proc
+	}
+	return EXIT_SUCCESS;
 }
