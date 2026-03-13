@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="zegar/zegar.vcxproj" Id="8b055069-5b37-4951-aa97-a98b14d18597" />
+</Solution>
