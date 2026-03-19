@@ -1,1 +1,19 @@
-.vs*
+# Ukryty folder konfiguracyjny
+.vs/
+
+# Foldery z gotowymi, ciężkimi programami
+Debug/
+Release/
+x64/
+x86/
+
+# Skompilowane pliki binarne (to one ważyły 180 MB!)
+*.exe
+*.dll
+*.obj
+*.pdb
+*.idb
+*.ilk
+*.suo
+*.db
+*.opendb
