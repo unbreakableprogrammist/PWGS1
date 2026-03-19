@@ -3,5 +3,5 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="zegar/zegar.vcxproj" />
+  <Project Path="schemat.vcxproj" />
 </Solution>
