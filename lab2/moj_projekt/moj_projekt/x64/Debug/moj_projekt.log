@@ -1,5 +1,0 @@
-﻿  main.cpp
-  PaintApp.cpp
-  Generowanie kodu...
-MSVCRTD.lib(exe_winmain.obj) : error LNK2019: nierozpoznany symbol zewnętrzny WinMain przywołany w funkcji "int __cdecl invoke_main(void)" (?invoke_main@@YAHXZ)
-C:\Users\krzys\source\repos\PWGS1\lab2\moj_projekt\x64\Debug\moj_projekt.exe : fatal error LNK1120: liczba nierozpoznanych elementów zewnętrznych: 1
