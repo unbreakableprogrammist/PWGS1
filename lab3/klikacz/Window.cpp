@@ -109,16 +109,67 @@ LRESULT Window::window_proc(HWND window, UINT message, WPARAM wParam, LPARAM lPa
     
     // Komunikat WM_CREATE przychodzi DOKŁADNIE RAZ, tuż po tym, jak okno się stworzy.
     case WM_CREATE: {
-        // 5. ZWYKŁY PRZYCISK (BS_PUSHBUTTON)
-        // Przycisk zatwierdzający na samym dole
+        
+		// zwykly przycisk , który nic nie robi, ale jest widoczny i można go kliknąć (niech Windows sam zajmie się jego wyglądem i klikaniem).
         CreateWindowExW(
-            0, L"BUTTON", L"Rysuj!",
+            0, L"BUTTON", L"przycisk!",
             WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON,
             20, 200, 120, 40,
             window, (HMENU)204, m_hInstance, nullptr
         );
+        // Podpis nad suwakiem
+        CreateWindowExW(
+            0, L"STATIC", L"Siła :",
+            WS_VISIBLE | WS_CHILD,
+            20, 240, 200, 20,
+            window, (HMENU)206, m_hInstance, nullptr
+        );
+        // 6. SUWAK (TRACKBAR)
+        CreateWindowExW(
+            0,
+            TRACKBAR_CLASS,       // Klasa okna: Suwak!
+            L"",                  // Suwak nie ma wbudowanego tekstu, więc zostawiamy puste
+            WS_VISIBLE | WS_CHILD | TBS_AUTOTICKS | TBS_HORZ, // Style suwaka
+            20, 260, 200, 40,     // Pozycja (X, Y) i rozmiar (Szerokość, Wysokość)
+            window,
+            (HMENU)205,           // Unikalne ID suwaka
+            m_hInstance,
+            nullptr
+        );
 
         return 0;
+    }
+    
+                  // Komunikat wysyłany ZA KAŻDYM RAZEM, gdy klikniesz jakiś przycisk lub zmienisz opcję.
+    case WM_COMMAND: {
+
+        // Z ukrytego parametru wParam "wyciągamy" ID klikniętego elementu (używając makra LOWORD).
+        int clicked_id = LOWORD(wParam);
+
+        // Sprawdzamy, czy kliknięto przycisk "Rysuj!" (w poprzednim kodzie daliśmy mu ID 204).
+        if (clicked_id == 204) {
+
+            // 1. ZNAMY ID SUWAKA, ALE POTRZEBUJEMY JEGO UCHWYTU (HWND)
+            // Funkcja GetDlgItem przeszukuje nasze główne okno ('window') i znajduje w nim 
+            // kontrolkę o podanym ID (nasz suwak dostał ID 205). Zwraca jej fizyczny uchwyt.
+            HWND hSlider = GetDlgItem(window, 205);
+
+            // 2. WYSYŁAMY ZAPYTANIE DO SUWAKA
+            // SendMessageW to taki nasz kurier. Wysyłamy go do okna suwaka (hSlider) 
+            // z wiadomością TBM_GETPOS (TrackBar Message - Get Position).
+            // Ostatnie zera to dodatkowe parametry (tutaj niepotrzebne).
+            // Funkcja zwraca nam aktualną pozycję jako liczbę całkowitą (LRESULT to w uproszczeniu int).
+            LRESULT slider_value = SendMessageW(hSlider, TBM_GETPOS, 0, 0);
+
+            // 3. WYŚWIETLAMY WYNIK, ŻEBY UDOWODNIĆ, ŻE DZIAŁA
+            // Sklejamy ładny tekst: "Wartość suwaka: " + zamieniamy naszą liczbę na tekst (to_wstring).
+            std::wstring message = L"Wartość suwaka: " + std::to_wstring(slider_value);
+
+            // Wyrzucamy na ekran małe, systemowe okienko z naszym wynikiem.
+            MessageBoxW(window, message.c_str(), L"Sukces!", MB_OK | MB_ICONINFORMATION);
+        }
+
+        return 0; // Komunikat obsłużony!
     }
 
                   // TYCH DWÓCH RZECZY BRAKOWAŁO:

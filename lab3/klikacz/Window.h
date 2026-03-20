@@ -1,7 +1,7 @@
 #pragma once // Instrukcja dla kompilatora: "wczytaj ten plik tylko raz, nawet jak ktoś go dołączy wielokrotnie".
 #include <windows.h> // Podstawowa i najważniejsza biblioteka ze wszystkimi funkcjami Windowsa.
 #include <string>    // Biblioteka do obsługi nowoczesnych napisów tekstowych (np. std::wstring).
-
+#include <commctrl.h>
 class Window {
 public: // Sekcja publiczna - to mogą wywoływać inni (np. nasz main.cpp).
 
