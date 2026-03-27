@@ -1,7 +1,7 @@
 ﻿#include "Window.h"
 #include "ColorPicker.h"
 
-// 
+// interpolacja liniowa -> miesza kolory punktu c1 i c2
 COLORREF InterpolateColor(COLORREF c1, COLORREF c2, float t) {
     int r = GetRValue(c1) + static_cast<int>((GetRValue(c2) - GetRValue(c1)) * t);
     int g = GetGValue(c1) + static_cast<int>((GetGValue(c2) - GetGValue(c1)) * t);
@@ -26,13 +26,13 @@ COLORREF GetGradientColor(const std::vector<ColorStop>& stops, float t) {
     return RGB(0, 0, 0);
 }
 
-// Renderuje canvas do bufora DIB i rysuje go na ekranie.
+// Renderuje canvas do bufora i rysuje go na ekranie.
 void Window::render_canvas_dib(HDC hdc, const RECT& rc) {
     int width = rc.right - rc.left;
     int height = rc.bottom - rc.top;
     if (width <= 0 || height <= 0 || m_stops.size() < 2) return;
 
-    const int LUT_SIZE = 1024;
+    const int LUT_SIZE = 1024; // optymalizacja 
     std::vector<DWORD> lut(LUT_SIZE);
     for (int i = 0; i < LUT_SIZE; ++i) {
         float t = static_cast<float>(i) / static_cast<float>(LUT_SIZE - 1);
@@ -40,14 +40,15 @@ void Window::render_canvas_dib(HDC hdc, const RECT& rc) {
         lut[i] = (GetRValue(c) << 16) | (GetGValue(c) << 8) | GetBValue(c);
     }
 
-    std::vector<DWORD> pixels(width * height);
+	std::vector<DWORD> pixels(width * height); // wektor pikseli do renderowania
 
-    float dx = static_cast<float>(m_ptEnd.x - m_ptStart.x);
+
+    float dx = static_cast<float>(m_ptEnd.x - m_ptStart.x); 
     float dy = static_cast<float>(m_ptEnd.y - m_ptStart.y);
     float lengthSq = dx * dx + dy * dy;
     if (lengthSq < 0.0001f) lengthSq = 1.0f;
     float maxDist = sqrt(lengthSq);
-
+	// wypelniamy canvas pikselami z lut, obliczajac dla kazdego pikselu jego polozenie wzgledem linii Start-End
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
             float px = static_cast<float>(x - m_ptStart.x);
