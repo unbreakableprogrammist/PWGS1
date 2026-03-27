@@ -17,7 +17,7 @@
 
 
 
-struct ColorStop {
+struct ColorStop { // dla tych prostokataow na pasku 
     float position; // gdzie lezy kolor 0.0 - maks lewo , 1.0 - maks prawo 
     COLORREF color; // przetrzymuje jaki to kolor 
 
@@ -43,17 +43,17 @@ private:
     HWND m_hStrip; // uchwyt do paska na dole 
     HINSTANCE m_hInstance;
 
-    std::vector<ColorStop> m_stops;
-    int m_draggedStopIndex;
-    int m_hoveredStopIndex;
-    bool m_isDragging;
+    std::vector<ColorStop> m_stops; // nasze prostokaty na pasku  
+    int m_draggedStopIndex; // ktory kwadracik trzymamy ( indx) 
+	int m_hoveredStopIndex; // nad ktorym kwadracikiem jest myszka (indx)
+	bool m_isDragging; // czy aktualnie trzymamy jakiś kwadracik
 
     // Punkty definiujące kierunek/środek gradientu na canvasie.
-    POINT m_ptStart;
-    POINT m_ptEnd;
-    int m_draggedCanvasPt;
-    int m_hoveredCanvasPt;
-    bool m_isRadial;
+    POINT m_ptStart; // wspolrzedne jednego kolka 
+	POINT m_ptEnd; // wspolrzedne drugiego kolka
+    int m_draggedCanvasPt; // czy koleczko ciagniete 
+	int m_hoveredCanvasPt; // do pogrubienia koleczka nad ktorym jest myszka
+    bool m_isRadial; // zmiana czy jest radial czy nie
 
     // Renderuje gradient do bufora DIB i wyświetla go na canvasie.
     void render_canvas_dib(HDC hdc, const RECT& rc);

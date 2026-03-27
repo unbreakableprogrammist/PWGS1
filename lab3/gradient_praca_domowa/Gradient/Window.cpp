@@ -1,7 +1,7 @@
 ﻿#include "Window.h"
 #include "ColorPicker.h"
 
-// Zwraca kolor pomiędzy `c1` i `c2` dla zakresu `t` 0..1.
+// 
 COLORREF InterpolateColor(COLORREF c1, COLORREF c2, float t) {
     int r = GetRValue(c1) + static_cast<int>((GetRValue(c2) - GetRValue(c1)) * t);
     int g = GetGValue(c1) + static_cast<int>((GetGValue(c2) - GetGValue(c1)) * t);
