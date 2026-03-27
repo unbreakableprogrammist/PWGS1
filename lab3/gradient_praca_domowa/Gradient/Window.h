@@ -1,29 +1,27 @@
 ﻿#pragma once
 #include <windows.h>
-#include <commdlg.h>   // <--- DODAJ TĘ LINIJKĘ (Common Dialogs)
+#include <commdlg.h>
 #include <string>
 #include <vector>
 #include <algorithm>
-#include <fstream> // DODANE: Do obsługi zapisywania plików CSV
+#include <fstream>
 
-#define ID_RESET_GRADIENT 1001
-#define ID_MODE_LINEAR    1002
-#define ID_MODE_RADIAL    1003
-// DODANE IDENTYFIKATORY:
-#define ID_FILE_OPEN      1004
-#define ID_FILE_SAVE      1005
-#define ID_FILE_EXPORT    1006
+// identyfikatory komend po to zeby : if (akcja == ID_FILE_SAVE) save_csv();
+#define ID_RESET_GRADIENT 1001 // Edit -> Reset Gradient / CTRL + R
+#define ID_MODE_LINEAR    1002 // Edit -> Mode -> Linear
+#define ID_MODE_RADIAL    1003 // Edit -> Mode -> Radial 
+#define ID_FILE_OPEN      1004 // File -> Open CSV / CTRL + O
+#define ID_FILE_SAVE      1005 // File -> Save CSV / CTRL + S
+#define ID_FILE_EXPORT    1006 // File -> Export BMP 
 
 
 
-// Reprezentuje pojedynczy punkt na pasku gradientu
-// Reprezentuje pojedynczy punkt na pasku gradientu
+
 struct ColorStop {
-    float position; // 0.0f (początek) do 1.0f (koniec)
-    COLORREF color; // Kolor RGB
+    float position; // gdzie lezy kolor 0.0 - maks lewo , 1.0 - maks prawo 
+    COLORREF color; // przetrzymuje jaki to kolor 
 
-    // DODANE: Uczymy C++ jak sortować nasze punkty (zawsze od najmniejszej pozycji)
-    bool operator<(const ColorStop& other) const {
+    bool operator<(const ColorStop& other) const { // wlasny komparator 
         return position < other.position;
     }
 };
@@ -32,13 +30,17 @@ class Window {
 public:
     Window(HINSTANCE instance);
     ~Window();
+
+    // Uruchamia główną pętlę komunikatów aplikacji.
     int run(int show_command);
+
+    // Informacja, czy okno główne zostało poprawnie utworzone.
     bool is_initialized() const { return m_hwnd != nullptr; }
 
 private:
-    HWND m_hwnd;
-    HWND m_hCanvas;
-    HWND m_hStrip;
+    HWND m_hwnd; // uchwyt do głównego okna 
+    HWND m_hCanvas; // uchwyt do obszaru canvas 
+    HWND m_hStrip; // uchwyt do paska na dole 
     HINSTANCE m_hInstance;
 
     std::vector<ColorStop> m_stops;
@@ -46,14 +48,14 @@ private:
     int m_hoveredStopIndex;
     bool m_isDragging;
 
-    // NOWE ZMIENNE DLA ZADANIA DOMOWEGO (KANWA):
-    POINT m_ptStart;       // Pozycja kółka Start
-    POINT m_ptEnd;         // Pozycja kółka End
-    int m_draggedCanvasPt; // Które kółko ciągniemy? (1 = Start, 2 = End, 0 = żadne)
-    int m_hoveredCanvasPt; // DODANE: Które kółko jest podświetlone? (0 = żadne)
-    bool m_isRadial;       // NOWE: Czy mamy włączony tryb kołowy?
+    // Punkty definiujące kierunek/środek gradientu na canvasie.
+    POINT m_ptStart;
+    POINT m_ptEnd;
+    int m_draggedCanvasPt;
+    int m_hoveredCanvasPt;
+    bool m_isRadial;
 
-    // NOWA FUNKCJA DO RYSOWANIA W PAMIĘCI RAM:
+    // Renderuje gradient do bufora DIB i wyświetla go na canvasie.
     void render_canvas_dib(HDC hdc, const RECT& rc);
 
     static const std::wstring s_class_name;
@@ -72,9 +74,9 @@ private:
     COLORREF get_interpolated_color(float t);
     int hit_test_strip(int x, int width);
 
-    // DODANE: Funkcje do plików
+    // Operacje wejścia/wyjścia: zapis/odczyt CSV i eksport BMP.
     void load_csv();
     void save_csv();
-    
-    void export_bmp();     // Nasz nowy eksport!
+
+    void export_bmp();
 };
