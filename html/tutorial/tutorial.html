@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <title>OtoPromotor</title>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header id="logo-panel">
+        <img src="logo.png" alt="Logo OtoPromotor">
+        <h1>Czym się różni seminarium od proseminarium?<br>Tym samym czym motor od promotora</h1>
+    </header>
+
+    <section id="filters-panel">
+        <form action="" method="GET">
+            
+            <select name="academic-title">
+                <option value="" disabled selected hidden>Tytuł/stopień naukowy/zawodowy</option>
+                <option value="1">Magister</option>
+                <option value="2">Doktor</option>
+                <option value="3">Doktor habilitowany</option>
+                <option value="4">Profesor</option>
+            </select>
+            
+            <select name="thesis-type">
+                <option value="" disabled selected hidden>Praca dyplomowa</option>
+                <option value="1">Licencjacka</option>
+                <option value="2">Inżynierska</option>
+                <option value="3">Magisterska</option>
+            </select>
+            
+            <select name="topic">
+                <option value="" disabled selected hidden>Obszar zainteresowań</option>
+                <optgroup label="Sztuczna Inteligencja">
+                    <option value="1">Uczenie Maszynowe</option>
+                    <option value="2">Algorytmy Genetyczne</option>
+                </optgroup>
+                <optgroup label="Inżynieria Oprogramowania">
+                    <option value="3">Aplikacje Webowe</option>
+                    <option value="4">Bazy Danych</option>
+                </optgroup>
+            </select>
+
+            <button type="reset">Wyczyść</button>
+
+        </form>
+    </section>
+
+    <main>
+        <div class="grid-container">
+            
+            <article class="promoter-card">
+                <figure>
+                    <img src="https://picsum.photos/300/250?random=1" alt="Portret: dr inż. Anna Nowak">
+                    <figcaption>dr inż. Anna Nowak</figcaption>
+                </figure>
+                <ul class="keywords">
+                    <li><abbr title="Monte Carlo Tree Search">MCTS</abbr></li>
+                    <li>Sztuczna Inteligencja</li>
+                </ul>
+            </article>
+
+            <article class="promoter-card">
+                <figure>
+                    <img src="https://picsum.photos/300/250?random=2" alt="Portret: prof. dr hab. Jan Kowalski">
+                    <figcaption>prof. dr hab. Jan Kowalski</figcaption>
+                </figure>
+                <ul class="keywords">
+                    <li><abbr title="Natural Language Processing">NLP</abbr></li>
+                    <li>Analiza tekstu</li>
+                </ul>
+            </article>
+
+            <article class="promoter-card">
+                <figure>
+                    <img src="https://picsum.photos/300/250?random=3" alt="Portret: mgr inż. Piotr Wiśniewski">
+                    <figcaption>mgr inż. Piotr Wiśniewski</figcaption>
+                </figure>
+                <ul class="keywords">
+                    <li><abbr title="User Interface / User Experience">UI/UX</abbr></li>
+                    <li>Projektowanie</li>
+                </ul>
+            </article>
+
+            <article class="promoter-card">
+                <figure>
+                    <img src="https://picsum.photos/300/250?random=4" alt="Portret: dr Ewa Kaczmarek">
+                    <figcaption>dr Ewa Kaczmarek</figcaption>
+                </figure>
+                <ul class="keywords">
+                    <li><abbr title="Internet of Things">IoT</abbr></li>
+                    <li>Systemy Wbudowane</li>
+                </ul>
+            </article>
+
+        </div>
+    </main>
+</body> 
+</html>
