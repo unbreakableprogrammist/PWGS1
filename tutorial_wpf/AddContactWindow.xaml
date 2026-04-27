@@ -1,0 +1,90 @@
+﻿<Window x:Class="tutorial_wpf.AddContactWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:tutorial_wpf"
+        xmlns:System="clr-namespace:System;assembly=mscorlib"
+        mc:Ignorable="d"
+        Title="Add Contact" Height="250" Width="350"
+        WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
+        ShowInTaskbar="False" WindowStyle="None"
+        BorderBrush="Black" BorderThickness="3">
+
+    <!--
+        Zasoby okna dodawania kontaktu.
+        ObjectDataProvider pobiera wszystkie wartości enuma Gender,
+        żeby zasilić nimi ComboBox.
+    -->
+    <Window.Resources>
+        <ObjectDataProvider x:Key="GenderList" MethodName="GetValues" ObjectType="{x:Type TypeName=System:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="local:Gender"/>
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+    </Window.Resources>
+
+    <!--
+        Układ okna:
+        - nagłówek,
+        - formularz pól kontaktu,
+        - przyciski akcji na dole.
+    -->
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Label Grid.Row="0" HorizontalAlignment="Center" FontSize="24">Add new contact</Label>
+
+        <!-- Siatka formularza 2 kolumny: etykieta + pole -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+
+            <Label Grid.Column="0" Grid.Row="0">Name:</Label>
+            <Label Grid.Column="0" Grid.Row="1">Surname:</Label>
+            <Label Grid.Column="0" Grid.Row="2">Email:</Label>
+            <Label Grid.Column="0" Grid.Row="3">Phone:</Label>
+            <Label Grid.Column="0" Grid.Row="4">Gender:</Label>
+
+            <!--
+                TextBoxy są zbindowane do właściwości obiektu Contact z DataContext.
+                UpdateSourceTrigger=PropertyChanged: model aktualizuje się przy każdym wpisanym znaku.
+            -->
+            <TextBox Grid.Column="1" Grid.Row="0" Height="24"
+                     Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"/>
+            <TextBox Grid.Column="1" Grid.Row="1" Height="24" 
+                     Text="{Binding Surname, UpdateSourceTrigger=PropertyChanged}"/>
+            <TextBox Grid.Column="1" Grid.Row="2" Height="24" 
+                     Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}"/>
+            <TextBox Grid.Column="1" Grid.Row="3" Height="24"
+                     Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}"/>
+
+            <!--
+                ComboBox:
+                - ItemsSource z listy wartości enuma Gender,
+                - SelectedItem zapisuje wybór do właściwości Gender.
+            -->
+            <ComboBox Grid.Column="1" Grid.Row="4" Height="24"
+                      ItemsSource="{Binding Source={StaticResource GenderList}}"
+                      SelectedItem="{Binding Path=Gender}" Margin="0,5,0,5" HorizontalAlignment="Left" Width="172" SelectionChanged="ComboBox_SelectionChanged" />
+        </Grid>
+
+        <!-- Przyciski zatwierdzenia i anulowania formularza -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center">
+            <Button Width="100" Height="30" Click="AddContact">Add contact</Button>
+            <Button Width="100" Height="30" Click="Cancel" Margin="15,0,0,0">Cancel</Button>
+        </StackPanel>
+    </Grid>
+</Window>

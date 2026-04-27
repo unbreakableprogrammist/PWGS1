@@ -1,11 +1,31 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <!-- WinExe = aplikacja okienkowa (bez konsoli) -->
     <OutputType>WinExe</OutputType>
+    <!-- Docelowy framework .NET + Windows -->
     <TargetFramework>net10.0-windows</TargetFramework>
+    <!-- Włącza nullable reference types -->
     <Nullable>enable</Nullable>
+    <!-- Dodaje globalne usingi domyślne dla projektu -->
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Informuje SDK, że projekt używa WPF -->
     <UseWPF>true</UseWPF>
   </PropertyGroup>
+
+  <!-- Usunięcie domyślnego traktowania plików jako None -->
+  <ItemGroup>
+    <None Remove="Resources\man.jpg" />
+    <None Remove="Resources\woman.jpg" />
+  </ItemGroup>
+
+  <!-- Dodanie obrazów jako zasoby osadzone dla WPF -->
+  <ItemGroup>
+    <Resource Include="Resources\man.jpg" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\woman.jpg" />
+  </ItemGroup>
 
 </Project>
