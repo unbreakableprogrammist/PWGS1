@@ -5,5 +5,93 @@
     Title="Edytor Automatów"
     Width="800"
     Height="600">
-    <Grid />
+    <Grid>
+        <!-- dodajemy dwie kolumy jedna o szerokosci zero a druga o szerokosci reszty-->
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="250"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Border Grid.Column="0" Background="LightGray" BorderBrush="LightGray" 
+                BorderThickness="0,0,1,0" Padding="15">
+            <!--ustawia dane w rzad jeden pod drugim-->
+            <StackPanel>
+                <!--jesli IsStateSelected jest true, to włączamy edycję stanu, text 
+                boxy sa od wyswietlania, checkboxy od zaznaczania tickami a button od klikniecia-->
+                <StackPanel IsEnabled="{Binding IsStateSelected}">
+                    <TextBlock Text="Edycja stanu" FontSize="16" FontWeight="Bold" Margin="0,0,0,15" />
+                    <TextBlock Text="{Binding SelectedState.Name, StringFormat='Wybrany stan: {0}'}" FontSize="14" Margin="0,0,0,15" />
+                    <CheckBox Content="Oznacz jako początkowy" IsChecked="{Binding SelectedState.IsInitial}" Click="InitialState_Click" Margin="0,0,0,10"/>
+                    <CheckBox Content="Oznacz jako akceptujący" IsChecked="{Binding SelectedState.IsAccepting}" Margin="0,0,0,20"/>
+                    <Button Content="Usuń stan" Click="DeleteState_Click" Padding="5" />
+                </StackPanel>
+
+                <Separator Margin="0,20,0,20" />
+                <!--reszta rzeczy ktora dziala zawsze -->
+                <StackPanel>
+                    <TextBlock Text="Dodaj przejście" FontSize="16" FontWeight="Bold" Margin="0,0,0,15" />
+
+                    <TextBlock Text="Od stanu:" Margin="0,0,0,5" />
+                    <ComboBox x:Name="ComboFrom" ItemsSource="{Binding MyAutomaton.States}" DisplayMemberPath="Name" Margin="0,0,0,10" />
+
+                    <TextBlock Text="Do stanu:" Margin="0,0,0,5" />
+                    <ComboBox x:Name="ComboTo" ItemsSource="{Binding MyAutomaton.States}" DisplayMemberPath="Name" Margin="0,0,0,10" />
+
+                    <TextBlock Text="Symbol (litera):" Margin="0,0,0,5" />
+                    <TextBox x:Name="TextSymbol" Margin="0,0,0,15" />
+
+                    <Button Content="Dodaj przejście" Click="AddTransition_Click" Padding="5" />
+                </StackPanel>
+
+            </StackPanel>
+        </Border>
+        <!-- w kolumnie 2 ma byc wlasnie ItemsControl czyli miejsce ktore bierze itemy z listy States i dodatkowo przypisujemy tu funkcje co jesli lewy przycisk
+        oraz jakie tlo calosci -->
+        <ItemsControl Grid.Column="1"
+                      ItemsSource="{Binding MyAutomaton.States}" 
+                      MouseLeftButtonDown="Canvas_MouseLeftButtonDown" 
+                      Background="White">
+            <!--domysle intemscontrol rysuje argumenty jako liste wiec my zmieniamy typ na canvas, tlo dodajemy po to zeby cos bylo wykrywane-->
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Canvas Background="Transparent" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <!--ustawienie elementu na canvas-->
+            <ItemsControl.ItemContainerStyle>
+                <Style TargetType="ContentPresenter">
+                    <Setter Property="Canvas.Left" Value="{Binding X}" />
+                    <Setter Property="Canvas.Top" Value="{Binding Y}" />
+                </Style>
+            </ItemsControl.ItemContainerStyle>
+            <!--teraz pora na wyglad jednego obiektu-->
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <!--ustawiamy go w siatke grid bo on jako jedyny pozwala na rysowaniu wielu elementow-->
+                    <!-- ustawiamy taki margin zeby wyposrodkowac -->
+                    <Grid Width="50" Height="50" Margin="-25,-25,0,0" Background="White" 
+                          MouseLeftButtonDown="State_MouseLeftButtonDown" 
+                          MouseMove="State_MouseMove"
+                          MouseLeftButtonUp="State_MouseLeftButtonUp">
+                        <Ellipse Fill="LightBlue">
+                            <Ellipse.Style>
+                                <Style TargetType="Ellipse">
+                                    <Setter Property="Stroke" Value="Black" />
+                                    <Setter Property="StrokeThickness" Value="2" />
+
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                            <Setter Property="Stroke" Value="Red" />
+                                            <Setter Property="StrokeThickness" Value="3" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Ellipse.Style>
+                        </Ellipse>
+                        <TextBlock Text="{Binding Name}" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" />
+                    </Grid>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+
+        </ItemsControl>
+    </Grid>
 </Window>
