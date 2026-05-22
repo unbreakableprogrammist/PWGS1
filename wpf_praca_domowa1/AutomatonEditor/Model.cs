@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -7,14 +8,17 @@ using System.Windows.Media;
 
 namespace AutomatonEditor;
 
-public class Automaton : INotifyPropertyChanged
+// Główny model automatu.
+// ObservableCollection automatycznie informuje kontrolki WPF, że do listy dodano
+// albo usunięto element. Dzięki temu ItemsControl odświeża rysunek bez ręcznego
+// przerysowywania całego Canvasu.
+public class Automaton
 {
     public ObservableCollection<State> States { get; set; } = [];
     public ObservableCollection<Transition> Transitions { get; set; } = [];
-
-    public event PropertyChangedEventHandler? PropertyChanged;
 }
 
+// Model pojedynczego stanu automatu wraz z wyglądem i pozycją.
 public class State : INotifyPropertyChanged
 {
     private double _x, _y;
@@ -24,6 +28,7 @@ public class State : INotifyPropertyChanged
     private double _strokeThickness = 2;
     private Brush _fillBrush = Brushes.LightBlue;
     private Brush _strokeBrush = Brushes.Black;
+    // Nazwa stanu, np. q0, q1.
     public string? Name { get; set; }
     public double X { get => _x; set { _x = value; OnPropertyChanged(); } }
     public double Y { get => _y; set { _y = value; OnPropertyChanged(); } }
@@ -32,7 +37,11 @@ public class State : INotifyPropertyChanged
     public bool IsSelected { get => _isSelected; set { _isSelected = value; OnPropertyChanged(); } }
     // Informacja o aktywnym stanie podczas symulacji.
     public bool IsActive { get => _isActive; set { _isActive = value; OnPropertyChanged(); } }
-    // Atrybuty wizualne stanu (rozmiar i styl obramowania)
+    // Atrybuty wizualne stanu (rozmiar i styl obramowania).
+    // Właściwość Radius jest powiązana z XAML-em przez Data Binding. Po zmianie
+    // suwaka trzeba zgłosić nie tylko sam Radius, ale też właściwości pochodne
+    // Diameter, NegativeRadiusMargin i AcceptingDiameter, bo to one decydują
+    // o faktycznym rozmiarze i położeniu okręgu na Canvasie.
     public double Radius
     {
         get => _radius;
@@ -46,10 +55,13 @@ public class State : INotifyPropertyChanged
         }
     }
 
+    // Średnica koła stanu (pomocniczo do bindowania w XAML).
     public double Diameter => Radius * 2;
 
+    // Ujemny margines, żeby środek stanu był w miejscu X/Y.
     public Thickness NegativeRadiusMargin => new(-Radius, -Radius, 0, 0);
 
+    // Średnica drugiego okręgu dla stanu akceptującego.
     public double AcceptingDiameter => Math.Max(Diameter - 10, 0);
 
     // Grubość krawędzi koła stanu
@@ -97,12 +109,22 @@ public class HistoryEntry
     public Transition? Transition { get; set; }
 }
 
+// Fragment tekstu rysowany z opcjonalnym wyróżnieniem.
+// Używamy tej klasy zarówno dla liter słowa wejściowego, jak i dla symboli
+// etykiety przejścia. Logika symulacji przechowuje czyste symbole, a widok
+// decyduje o kolorach na podstawie IsActive.
+public class SymbolDisplayPart
+{
+    public string Text { get; set; } = string.Empty;
+    public bool IsActive { get; set; }
+}
+
 public class Transition : INotifyPropertyChanged
 {
     private State _source = null!;
     private State _target = null!;
 
-    private string _symbol;
+    private string _symbol = string.Empty;
     private bool _isSelected;
     private bool _isActive;
     private string _activeSymbol = string.Empty;
@@ -114,6 +136,7 @@ public class Transition : INotifyPropertyChanged
     private PointCollection _arrowPoints = [];
     private double _textX;
     private double _textY;
+    // Etykieta przejścia, np. "0,1".
     public string Symbol
     {
         get => _symbol;
@@ -121,11 +144,12 @@ public class Transition : INotifyPropertyChanged
         {
             _symbol = value;
             OnPropertyChanged();
-            OnPropertyChanged(nameof(DisplaySymbol));
+            OnPropertyChanged(nameof(SymbolParts));
         }
     }
 
     // Flaga zaznaczenia przejścia w UI.
+    // Czy przejście jest zaznaczone myszką.
     public bool IsSelected
     {
         get => _isSelected;
@@ -137,6 +161,7 @@ public class Transition : INotifyPropertyChanged
     }
 
     // Informacja o aktywnym przejściu podczas symulacji.
+    // Czy przejście jest aktualnie aktywne w symulacji.
     public bool IsActive
     {
         get => _isActive;
@@ -144,7 +169,7 @@ public class Transition : INotifyPropertyChanged
         {
             _isActive = value;
             OnPropertyChanged();
-            OnPropertyChanged(nameof(DisplaySymbol));
+            OnPropertyChanged(nameof(SymbolParts));
         }
     }
 
@@ -156,34 +181,49 @@ public class Transition : INotifyPropertyChanged
         {
             _activeSymbol = value ?? string.Empty;
             OnPropertyChanged();
-            OnPropertyChanged(nameof(DisplaySymbol));
+            OnPropertyChanged(nameof(SymbolParts));
         }
     }
 
-    // Etykieta z wyróżnionym symbolem aktywnego przejścia.
-    public string DisplaySymbol
+    // Części etykiety przejścia używane do wizualnego wyróżnienia aktywnego symbolu.
+    // Etykieta "a,b,c" jest rozbijana na osobne elementy: "a", ",", "b", ",", "c".
+    // Dzięki temu XAML może nadać tło tylko aktualnie przetwarzanemu symbolowi,
+    // zamiast dopisywać do tekstu sztuczne nawiasy typu [a].
+    public IReadOnlyList<SymbolDisplayPart> SymbolParts
     {
         get
         {
-            if (!IsActive || string.IsNullOrWhiteSpace(ActiveSymbol))
+            var displayParts = new List<SymbolDisplayPart>();
+            if (string.IsNullOrWhiteSpace(Symbol))
             {
-                return Symbol;
+                return displayParts;
             }
 
             var parts = Symbol.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             for (var i = 0; i < parts.Length; i++)
             {
-                if (parts[i] == ActiveSymbol)
+                displayParts.Add(new SymbolDisplayPart
                 {
-                    parts[i] = $"[{parts[i]}]";
+                    Text = parts[i],
+                    IsActive = IsActive && parts[i] == ActiveSymbol
+                });
+
+                if (i < parts.Length - 1)
+                {
+                    displayParts.Add(new SymbolDisplayPart
+                    {
+                        Text = ",",
+                        IsActive = false
+                    });
                 }
             }
 
-            return string.Join(",", parts);
+            return displayParts;
         }
     }
 
     // Przesunięcie krzywizny, gdy istnieją przejścia w obie strony.
+    // Offset łuku, żeby przejścia w dwie strony się nie nakładały.
     public double CurveOffset
     {
         get => _curveOffset;
@@ -194,6 +234,7 @@ public class Transition : INotifyPropertyChanged
         }
     }
 
+    // Stan źródłowy.
     public State Source
     {
         get => _source;
@@ -208,6 +249,7 @@ public class Transition : INotifyPropertyChanged
         }
     }
 
+    // Stan docelowy.
     public State Target
     {
         get => _target;
@@ -222,12 +264,14 @@ public class Transition : INotifyPropertyChanged
         }
     }
 
+    // Współrzędne pomocnicze (zostawione dla kompatybilności).
     public double X1 => Source?.X ?? 0;
     public double Y1 => Source?.Y ?? 0;
     public double X2 => Target?.X ?? 0;
     public double Y2 => Target?.Y ?? 0;
 
     // Geometria oraz punkty strzałki wykorzystywane przez widok.
+    // Geometria ścieżki używana przez Path w XAML.
     public Geometry PathGeometry
     {
         get => _pathGeometry;
@@ -238,6 +282,7 @@ public class Transition : INotifyPropertyChanged
         }
     }
 
+    // Punkty trójkąta strzałki.
     public PointCollection ArrowPoints
     {
         get => _arrowPoints;
@@ -248,6 +293,7 @@ public class Transition : INotifyPropertyChanged
         }
     }
 
+    // Punkt końcowy strzałki.
     public Point ArrowTip
     {
         get => _arrowTip;
@@ -258,6 +304,7 @@ public class Transition : INotifyPropertyChanged
         }
     }
 
+    // Boki strzałki.
     public Point ArrowBase1
     {
         get => _arrowBase1;
@@ -278,6 +325,7 @@ public class Transition : INotifyPropertyChanged
         }
     }
 
+    // Pozycja etykiety na płótnie.
     public double TextX
     {
         get => _textX;
@@ -298,6 +346,10 @@ public class Transition : INotifyPropertyChanged
         }
     }
 
+    // Odświeżenie geometrii, gdy stan się przesuwa.
+    // Transition subskrybuje PropertyChanged obu stanów. Jeżeli użytkownik przesunie
+    // stan albo zmieni jego promień, przejście automatycznie przelicza punkt startu,
+    // punkt końca, strzałkę oraz pozycję etykiety.
     private void State_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == "X" || e.PropertyName == "Y" || e.PropertyName == "Radius")
@@ -307,6 +359,13 @@ public class Transition : INotifyPropertyChanged
     }
 
     // Wyznacza ścieżkę, etykietę i strzałkę przejścia na podstawie pozycji stanów.
+    //
+    // WPF nie rysuje przejścia jako zwykłego "obiektu grafu". Tworzymy geometrię
+    // PathGeometry, którą XAML wyświetla w kontrolce Path. Dla zwykłego przejścia
+    // obliczamy wektor od stanu źródłowego do docelowego i przesuwamy końce linii
+    // o promienie stanów, żeby strzałka kończyła się na krawędzi okręgu, a nie
+    // w jego środku. Dla przejścia do samego siebie rysujemy krzywą Beziera nad
+    // stanem, ponieważ prosta linia miałaby zerową długość.
     private void RefreshGeometry()
     {
         if (Source == null || Target == null)
@@ -339,7 +398,6 @@ public class Transition : INotifyPropertyChanged
         else
         {
             var direction = end - start;
-            var length = Math.Max(direction.Length, 1);
             direction.Normalize();
             var normal = new Vector(-direction.Y, direction.X);
             var startPoint = new Point(start.X + direction.X * Source.Radius, start.Y + direction.Y * Source.Radius);
@@ -362,6 +420,11 @@ public class Transition : INotifyPropertyChanged
         OnPropertyChanged(nameof(TextY));
     }
 
+    // Tworzy prostą linię albo łuk w zależności od kontrolnego punktu.
+    // Jeśli punkt kontrolny leży w środku odcinka, przejście jest zwykłą linią.
+    // Jeśli jest odsunięty w bok (CurveOffset), powstaje łuk. To rozwiązuje
+    // problem dwóch przejść między tymi samymi stanami w przeciwnych kierunkach:
+    // linie nie nakładają się wtedy na siebie.
     private static Geometry CreatePath(Point startPoint, Point endPoint, Point controlPoint)
     {
         if (Math.Abs(controlPoint.X - ((startPoint.X + endPoint.X) / 2)) < 0.1 &&
@@ -375,6 +438,10 @@ public class Transition : INotifyPropertyChanged
         return new PathGeometry(new[] { figure });
     }
 
+    // Wylicza kształt strzałki na końcu przejścia.
+    // Strzałka jest trójkątem Polygon. Najpierw znamy czubek (tip) i kierunek
+    // krzywej przy końcu. Cofamy się od czubka o arrowLength, a następnie
+    // wyznaczamy dwa boczne punkty prostopadle do kierunku przejścia.
     private void UpdateArrow(Point tip, Vector direction)
     {
         const double arrowLength = 12;

@@ -1,4 +1,5 @@
-﻿<Window
+﻿<!-- Główne okno aplikacji z edytorem i symulatorem -->
+<Window
     x:Class="AutomatonEditor.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -6,11 +7,13 @@
     Title="Edytor Automatów"
     Width="800"
     Height="600">
+    <!-- Układ okna: menu + główna siatka -->
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
+        <!-- Menu główne z importem/eksportem -->
         <Menu Grid.Row="0">
             <MenuItem Header="Plik">
                 <MenuItem Header="Import" Click="Import_Click" />
@@ -18,24 +21,32 @@
                 <MenuItem Header="Eksport obraz" Click="ExportImage_Click" />
             </MenuItem>
         </Menu>
-        <!-- dodajemy dwie kolumy jedna o szerokosci zero a druga o szerokosci reszty-->
+        <!-- Główna część okna: panel boczny + płótno -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="250"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
+        <!-- Lewy panel z kontrolkami -->
         <Border Grid.Column="0" Background="LightGray" BorderBrush="LightGray" 
                 BorderThickness="0,0,1,0" Padding="15">
-            <!--ustawia dane w rzad jeden pod drugim-->
+            <!-- ScrollViewer jest potrzebny, bo panel narzędzi ma więcej kontrolek
+                 niż mieści się w oknie o małej wysokości. -->
             <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                 <StackPanel>
-                <!--jesli IsStateSelected jest true, to włączamy edycję stanu, text 
-                boxy sa od wyswietlania, checkboxy od zaznaczania tickami a button od klikniecia-->
+                <!-- Sekcja edycji stanu: aktywna tylko gdy stan jest zaznaczony.
+                     IsEnabled jest powiązane z IsStateSelected, czyli zwykłym bool
+                     z code-behind. Gdy SelectedState == null, wszystkie kontrolki
+                     edycji stanu są wyszarzone. -->
                 <StackPanel IsEnabled="{Binding IsStateSelected}">
                     <TextBlock Text="Edycja stanu" FontSize="16" FontWeight="Bold" Margin="0,0,0,15" />
                     <TextBlock Text="{Binding SelectedState.Name, StringFormat='Wybrany stan: {0}'}" FontSize="14" Margin="0,0,0,15" />
                     <CheckBox Content="Oznacz jako początkowy" IsChecked="{Binding SelectedState.IsInitial}" Click="InitialState_Click" Margin="0,0,0,10"/>
                     <CheckBox Content="Oznacz jako akceptujący" IsChecked="{Binding SelectedState.IsAccepting}" Margin="0,0,0,20"/>
+                    <!-- Przykład Data Bindingu dwukierunkowego w praktyce:
+                         ComboBox zapisuje wybrany Brush bezpośrednio do
+                         SelectedState.FillBrush. Ponieważ State zgłasza
+                         PropertyChanged, Ellipse na płótnie od razu zmienia kolor. -->
                     <TextBlock Text="Kolor wypełnienia" Margin="0,0,0,5" />
                     <ComboBox SelectedValuePath="Tag" SelectedValue="{Binding SelectedState.FillBrush}" Margin="0,0,0,10">
                         <ComboBoxItem Content="Jasny niebieski" Tag="{x:Static media:Brushes.LightBlue}" />
@@ -54,6 +65,9 @@
                         <ComboBoxItem Content="Szary" Tag="{x:Static media:Brushes.DimGray}" />
                     </ComboBox>
 
+                    <!-- Slidery sterują właściwościami liczbowymi stanu. Zmiana
+                         promienia wpływa nie tylko na średnicę okręgu, ale też na
+                         pozycję końców przejść, bo Transition nasłuchuje zmian Radius. -->
                     <TextBlock Text="Promień" Margin="0,0,0,5" />
                     <Slider Minimum="15" Maximum="60" Value="{Binding SelectedState.Radius}" Margin="0,0,0,10" />
 
@@ -63,7 +77,7 @@
                 </StackPanel>
 
                 <Separator Margin="0,20,0,20" />
-                <!--reszta rzeczy ktora dziala zawsze -->
+                <!-- Sekcja dodawania przejść i podglądu alfabetu -->
                 <StackPanel>
                     <TextBlock Text="Dodaj przejście" FontSize="16" FontWeight="Bold" Margin="0,0,0,15" />
 
@@ -84,11 +98,16 @@
                     <TextBlock Text="{Binding AlphabetDisplay}" TextWrapping="Wrap" />
                 </StackPanel>
 
+                <!-- Sekcja symulacji DFA -->
                 <Separator Margin="0,20,0,20" />
                 <StackPanel>
                     <TextBlock Text="Symulacja" FontSize="16" FontWeight="Bold" Margin="0,0,0,15" />
                     <TextBlock Text="Słowo wejściowe:" Margin="0,0,0,5" />
-                    <TextBox Text="{Binding InputWord, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsInputEditable}" Margin="0,0,0,10">
+                    <!-- UpdateSourceTrigger=PropertyChanged sprawia, że InputWord
+                         aktualizuje się po każdej wpisanej literze, a nie dopiero
+                         po utracie fokusu. IsReadOnly blokuje edycję po rozpoczęciu
+                         obliczeń krokowych lub animacji. -->
+                    <TextBox Text="{Binding InputWord, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="{Binding IsInputLocked}" Margin="0,0,0,10">
                         <TextBox.Style>
                             <Style TargetType="TextBox">
                                 <Style.Triggers>
@@ -100,13 +119,57 @@
                             </Style>
                         </TextBox.Style>
                     </TextBox>
-                    <TextBlock Text="{Binding InputWordDisplay}" TextWrapping="Wrap" Margin="0,0,0,10" />
+                    <!-- Wizualny podgląd taśmy wejściowej. Każda litera jest osobnym
+                         elementem SymbolDisplayPart. DataTrigger poniżej wyróżnia
+                         tę literę, na której aktualnie znajduje się "głowica" DFA. -->
+                    <ItemsControl ItemsSource="{Binding InputWordSymbols}" Margin="0,0,0,10" MinHeight="24">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="4,2" Margin="0,0,2,2" CornerRadius="3">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="Transparent" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                    <Setter Property="Background" Value="DodgerBlue" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock Text="{Binding Text}">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="Black" />
+                                                <Setter Property="FontWeight" Value="Normal" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                        <Setter Property="Foreground" Value="White" />
+                                                        <Setter Property="FontWeight" Value="Bold" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
 
+                    <!-- Przyciski trybu krokowego. Ich IsEnabled jest bindowane do
+                         właściwości CanPrevious/CanNext, więc code-behind decyduje,
+                         kiedy cofanie albo przejście dalej ma sens. -->
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                         <Button Content="Previous" Click="Previous_Click" Padding="5" Margin="0,0,10,0" IsEnabled="{Binding CanPrevious}" />
                         <Button Content="Next" Click="Next_Click" Padding="5" IsEnabled="{Binding CanNext}" />
                     </StackPanel>
 
+                    <!-- Przyciski trybu animacji. Timer wykonuje te same kroki co
+                         przycisk Next, tylko automatycznie w ustalonym odstępie czasu. -->
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                         <Button Content="Start" Click="Start_Click" Padding="5" Margin="0,0,10,0" IsEnabled="{Binding CanStart}" />
                         <Button Content="Stop" Click="Stop_Click" Padding="5" Margin="0,0,10,0" IsEnabled="{Binding CanStop}" />
@@ -117,6 +180,7 @@
                     <Slider Minimum="0.2" Maximum="2.0" Value="{Binding AnimationSpeed}" Margin="0,0,0,10" />
                     <TextBlock Text="{Binding SimulationStatus}" TextWrapping="Wrap" FontWeight="Bold" />
                     <TextBlock Text="Historia" Margin="0,20,0,5" FontWeight="Bold" />
+                    <!-- Historia kroków symulacji -->
                     <ListBox ItemsSource="{Binding History}" Height="120">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
@@ -134,7 +198,9 @@
         </Border>
         <!-- tutaj zajmujemy sie prawa strona a wiec canvasem-->
         <Grid x:Name="CanvasHost" Grid.Column="1" Background="White" MouseLeftButtonDown="Canvas_MouseLeftButtonDown">
-            <!-- podpinamy linie  -->
+            <!-- Warstwa przejść jest rysowana przed stanami, żeby linie i strzałki
+                 znajdowały się pod okręgami. Każdy Transition dostarcza gotową
+                 geometrię PathGeometry, punkty strzałki oraz pozycję etykiety. -->
             <ItemsControl ItemsSource="{Binding MyAutomaton.Transitions}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
@@ -144,6 +210,9 @@
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <Canvas>
+                            <!-- Path rysuje linię lub krzywą przejścia. Dane geometrii
+                                 są liczone w klasie Transition na podstawie pozycji
+                                 stanów źródłowego i docelowego. -->
                             <Path Data="{Binding PathGeometry}" MouseLeftButtonDown="Transition_MouseLeftButtonDown">
                                 <Path.Style>
                                     <Style TargetType="Path">
@@ -162,6 +231,9 @@
                                     </Style>
                                 </Path.Style>
                             </Path>
+                            <!-- Polygon jest grotem strzałki. Punkty trójkąta są
+                                 przeliczane razem z geometrią przejścia, więc grot
+                                 obraca się zgodnie z kierunkiem krawędzi. -->
                             <Polygon Points="{Binding ArrowPoints}" MouseLeftButtonDown="Transition_MouseLeftButtonDown">
                                 <Polygon.Style>
                                     <Style TargetType="Polygon">
@@ -178,16 +250,54 @@
                                 </Polygon.Style>
                             </Polygon>
 
-                            <TextBlock Text="{Binding DisplaySymbol}" 
-                                       Canvas.Left="{Binding TextX}" 
-                                       Canvas.Top="{Binding TextY}"
-                                       Margin="10,-15,0,0"
-                                       FontWeight="Bold" Foreground="DarkBlue"/>
+                            <!-- Etykieta przejścia również jest ItemsControl. Dzięki
+                                 temu aktywny symbol etykiety można wyróżnić kolorem
+                                 bez zmieniania samego tekstu etykiety w modelu. -->
+                            <ItemsControl ItemsSource="{Binding SymbolParts}"
+                                          Canvas.Left="{Binding TextX}"
+                                          Canvas.Top="{Binding TextY}"
+                                          Margin="10,-15,0,0">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Padding="2,0" CornerRadius="2">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="Transparent" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                            <Setter Property="Background" Value="DodgerBlue" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock Text="{Binding Text}" FontWeight="Bold">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Foreground" Value="DarkBlue" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsActive}" Value="True">
+                                                                <Setter Property="Foreground" Value="White" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                         </Canvas>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
-            <!-- tutaj zajmujemy sie stanami (czyli okregami -->
+            <!-- Warstwa stanów. ContentPresenter dostaje Canvas.Left/Canvas.Top z
+                 właściwości X/Y stanu. W modelu X/Y traktujemy jako środek okręgu,
+                 dlatego wewnętrzny Grid ma ujemny margines równy promieniowi. -->
             <ItemsControl ItemsSource="{Binding MyAutomaton.States}" Background="Transparent">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
@@ -209,11 +319,16 @@
               MouseMove="State_MouseMove"
               MouseLeftButtonUp="State_MouseLeftButtonUp">
 
+                            <!-- Strzałka przy stanie początkowym jest domyślnie ukryta
+                                 i pojawia się dopiero, gdy IsInitial == true. -->
                             <Path x:Name="InitialArrow" 
                   Data="M -20 25 L 0 25 M -5 20 L 0 25 L -5 30" 
                   Stroke="Black" StrokeThickness="2" 
                   Visibility="Collapsed" />
 
+                            <!-- Główny okrąg stanu. FillBrush, StrokeBrush,
+                                 StrokeThickness i promień są bindowane do modelu,
+                                 więc zmiany z panelu po lewej od razu zmieniają rysunek. -->
                             <Ellipse x:Name="MainCircle" Fill="{Binding FillBrush}">
                                 <Ellipse.Style>
                                     <Style TargetType="Ellipse">
@@ -233,6 +348,8 @@
                                 </Ellipse.Style>
                             </Ellipse>
 
+                            <!-- Drugi, mniejszy okrąg oznacza stan akceptujący,
+                                 zgodnie z klasyczną notacją automatów skończonych. -->
                             <Ellipse x:Name="AcceptingCircle" 
                      Width="{Binding AcceptingDiameter}" Height="{Binding AcceptingDiameter}" 
                      Stroke="{Binding StrokeBrush}" StrokeThickness="{Binding StrokeThickness}" 
@@ -242,7 +359,9 @@
 
                             <TextBlock Text="{Binding Name}" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" />
                         </Grid>
-                        <!--jesli klikniemy ze jest akceptujacy albo poczatkowy-->
+                        <!-- Triggery DataTemplate reagują na właściwości stanu i
+                             pokazują symbole specjalne: podwójny okrąg dla stanu
+                             akceptującego oraz strzałkę dla stanu początkowego. -->
                         <DataTemplate.Triggers>
                             <DataTrigger Binding="{Binding IsAccepting}" Value="True">
                                 <Setter TargetName="AcceptingCircle" Property="Visibility" Value="Visible" />

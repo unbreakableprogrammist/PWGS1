@@ -15,6 +15,7 @@ public static class AutomatonSerializer
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
+    // Wczytanie pliku JSON do obiektu danych.
     public static AutomatonData Deserialize(string json)
     {
         var data = JsonSerializer.Deserialize<AutomatonData>(json, Options);
@@ -26,8 +27,10 @@ public static class AutomatonSerializer
         return data;
     }
 
+    // Zapis obiektu danych do JSON.
     public static string Serialize(AutomatonData data) => JsonSerializer.Serialize(data, Options);
 
+    // Konwersja zapisu koloru (np. #FFFFFF) na Brush.
     public static Brush ParseBrush(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
@@ -43,6 +46,7 @@ public static class AutomatonSerializer
         throw new InvalidOperationException($"Niepoprawny kolor: {value}");
     }
 
+    // Konwersja Brush na string zapisany w JSON.
     public static string BrushToString(Brush brush)
     {
         if (brush is SolidColorBrush solid)

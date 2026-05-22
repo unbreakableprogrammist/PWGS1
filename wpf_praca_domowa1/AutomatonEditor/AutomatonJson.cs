@@ -10,6 +10,7 @@ public class AutomatonData
     public List<TransitionData> Transitions { get; set; } = [];
 }
 
+// Sekcja meta z opisem i alfabetem.
 public class AutomatonMeta
 {
     public string Description { get; set; } = string.Empty;
@@ -17,6 +18,7 @@ public class AutomatonMeta
     public DateTimeOffset? Created { get; set; }
 }
 
+// Dane stanu w formacie JSON.
 public class StateData
 {
     public int Id { get; set; }
@@ -27,12 +29,14 @@ public class StateData
     public StateAppearance Appearance { get; set; } = new();
 }
 
+// Pozycja stanu na płótnie.
 public class StatePosition
 {
     public double X { get; set; }
     public double Y { get; set; }
 }
 
+// Wygląd stanu w JSON (kolory, promień, grubość).
 public class StateAppearance
 {
     public double Radius { get; set; } = 25;
@@ -41,6 +45,7 @@ public class StateAppearance
     public double StrokeThickness { get; set; } = 2;
 }
 
+// Dane przejścia w JSON.
 public class TransitionData
 {
     public int FromStateId { get; set; }
