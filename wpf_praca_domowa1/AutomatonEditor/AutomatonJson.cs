@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace AutomatonEditor;
 
-// Model danych do importu/eksportu automatu w formacie JSON.
+// Modele do JSON.
 public class AutomatonData
 {
     public AutomatonMeta Meta { get; set; } = new();
@@ -18,7 +18,7 @@ public class AutomatonMeta
     public DateTimeOffset? Created { get; set; }
 }
 
-// Dane stanu w formacie JSON.
+// Dane stanu w JSON.
 public class StateData
 {
     public int Id { get; set; }
@@ -29,14 +29,14 @@ public class StateData
     public StateAppearance Appearance { get; set; } = new();
 }
 
-// Pozycja stanu na płótnie.
+// Pozycja stanu.
 public class StatePosition
 {
     public double X { get; set; }
     public double Y { get; set; }
 }
 
-// Wygląd stanu w JSON (kolory, promień, grubość).
+// Wygląd stanu (kolory, promień, grubość).
 public class StateAppearance
 {
     public double Radius { get; set; } = 25;

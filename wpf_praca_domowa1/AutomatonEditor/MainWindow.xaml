@@ -1,4 +1,4 @@
-﻿<!-- Główne okno aplikacji z edytorem i symulatorem -->
+﻿<!-- Główne okno aplikacji -->
 <Window
     x:Class="AutomatonEditor.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -7,7 +7,6 @@
     Title="Edytor Automatów"
     Width="800"
     Height="600">
-    <!-- Układ okna: menu + główna siatka -->
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -30,23 +29,17 @@
         <!-- Lewy panel z kontrolkami -->
         <Border Grid.Column="0" Background="LightGray" BorderBrush="LightGray" 
                 BorderThickness="0,0,1,0" Padding="15">
-            <!-- ScrollViewer jest potrzebny, bo panel narzędzi ma więcej kontrolek
-                 niż mieści się w oknie o małej wysokości. -->
+            <!-- wlaczamy scroll -->
             <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                 <StackPanel>
                 <!-- Sekcja edycji stanu: aktywna tylko gdy stan jest zaznaczony.
-                     IsEnabled jest powiązane z IsStateSelected, czyli zwykłym bool
-                     z code-behind. Gdy SelectedState == null, wszystkie kontrolki
-                     edycji stanu są wyszarzone. -->
+                     IsEnabled jest powiązane z IsStateSelected, czyli zwykłym bool-->
                 <StackPanel IsEnabled="{Binding IsStateSelected}">
                     <TextBlock Text="Edycja stanu" FontSize="16" FontWeight="Bold" Margin="0,0,0,15" />
                     <TextBlock Text="{Binding SelectedState.Name, StringFormat='Wybrany stan: {0}'}" FontSize="14" Margin="0,0,0,15" />
                     <CheckBox Content="Oznacz jako początkowy" IsChecked="{Binding SelectedState.IsInitial}" Click="InitialState_Click" Margin="0,0,0,10"/>
                     <CheckBox Content="Oznacz jako akceptujący" IsChecked="{Binding SelectedState.IsAccepting}" Margin="0,0,0,20"/>
-                    <!-- Przykład Data Bindingu dwukierunkowego w praktyce:
-                         ComboBox zapisuje wybrany Brush bezpośrednio do
-                         SelectedState.FillBrush. Ponieważ State zgłasza
-                         PropertyChanged, Ellipse na płótnie od razu zmienia kolor. -->
+                    <!-- tu zmieniamy selectedstate.fillbrush -> onproperty sie zmienia i elipsa sie aktualizuje -->
                     <TextBlock Text="Kolor wypełnienia" Margin="0,0,0,5" />
                     <ComboBox SelectedValuePath="Tag" SelectedValue="{Binding SelectedState.FillBrush}" Margin="0,0,0,10">
                         <ComboBoxItem Content="Jasny niebieski" Tag="{x:Static media:Brushes.LightBlue}" />
@@ -57,18 +50,14 @@
                     </ComboBox>
 
                     <TextBlock Text="Kolor krawędzi" Margin="0,0,0,5" />
-                    <ComboBox SelectedValuePath="Tag" SelectedValue="{Binding SelectedState.StrokeBrush}" Margin="0,0,0,10">
-                        <ComboBoxItem Content="Czarny" Tag="{x:Static media:Brushes.Black}" />
-                        <ComboBoxItem Content="Granatowy" Tag="{x:Static media:Brushes.DarkBlue}" />
-                        <ComboBoxItem Content="Czerwony" Tag="{x:Static media:Brushes.DarkRed}" />
-                        <ComboBoxItem Content="Zielony" Tag="{x:Static media:Brushes.DarkGreen}" />
-                        <ComboBoxItem Content="Szary" Tag="{x:Static media:Brushes.DimGray}" />
-                    </ComboBox>
-
-                    <!-- Slidery sterują właściwościami liczbowymi stanu. Zmiana
-                         promienia wpływa nie tylko na średnicę okręgu, ale też na
-                         pozycję końców przejść, bo Transition nasłuchuje zmian Radius. -->
-                    <TextBlock Text="Promień" Margin="0,0,0,5" />
+                            <ComboBox SelectedValuePath="Tag" SelectedValue="{Binding SelectedState.StrokeBrush}" Margin="0,0,0,10">
+                                <ComboBoxItem Content="Czarny" Tag="{x:Static media:Brushes.Black}" />
+                                <ComboBoxItem Content="Granatowy" Tag="{x:Static media:Brushes.DarkBlue}" />
+                                <ComboBoxItem Content="Czerwony" Tag="{x:Static media:Brushes.DarkRed}" />
+                                <ComboBoxItem Content="Zielony" Tag="{x:Static media:Brushes.DarkGreen}" />
+                                <ComboBoxItem Content="Szary" Tag="{x:Static media:Brushes.DimGray}" />
+                            </ComboBox>
+                            <TextBlock Text="Promień" Margin="0,0,0,5" />
                     <Slider Minimum="15" Maximum="60" Value="{Binding SelectedState.Radius}" Margin="0,0,0,10" />
 
                     <TextBlock Text="Grubość krawędzi" Margin="0,0,0,5" />
@@ -77,7 +66,7 @@
                 </StackPanel>
 
                 <Separator Margin="0,20,0,20" />
-                <!-- Sekcja dodawania przejść i podglądu alfabetu -->
+                <!-- przejscia i dodawanie alfabetu -->
                 <StackPanel>
                     <TextBlock Text="Dodaj przejście" FontSize="16" FontWeight="Bold" Margin="0,0,0,15" />
 
@@ -87,7 +76,7 @@
                     <TextBlock Text="Do stanu:" Margin="0,0,0,5" />
                     <ComboBox x:Name="ComboTo" ItemsSource="{Binding MyAutomaton.States}" DisplayMemberPath="Name" Margin="0,0,0,10" />
 
-                    <TextBlock Text="Etykieta (np. a,b,c):" Margin="0,0,0,5" />
+                    <TextBlock Text="Etykieta :" Margin="0,0,0,5" />
                     <TextBox x:Name="TextSymbol" Margin="0,0,0,15" />
 
                     <Button Content="Dodaj przejście" Click="AddTransition_Click" Padding="5" />
@@ -98,15 +87,12 @@
                     <TextBlock Text="{Binding AlphabetDisplay}" TextWrapping="Wrap" />
                 </StackPanel>
 
-                <!-- Sekcja symulacji DFA -->
+                <!-- symulacja  -->
                 <Separator Margin="0,20,0,20" />
-                <StackPanel>
+                <StackPanel>    
                     <TextBlock Text="Symulacja" FontSize="16" FontWeight="Bold" Margin="0,0,0,15" />
                     <TextBlock Text="Słowo wejściowe:" Margin="0,0,0,5" />
-                    <!-- UpdateSourceTrigger=PropertyChanged sprawia, że InputWord
-                         aktualizuje się po każdej wpisanej literze, a nie dopiero
-                         po utracie fokusu. IsReadOnly blokuje edycję po rozpoczęciu
-                         obliczeń krokowych lub animacji. -->
+                    <!--aktualizujemy ze aktualizujemy tekst zawsze jak klikniemy nowy przycisk, IsReadOnly blokuje nam tekst w trakcie symulacji-->
                     <TextBox Text="{Binding InputWord, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="{Binding IsInputLocked}" Margin="0,0,0,10">
                         <TextBox.Style>
                             <Style TargetType="TextBox">
@@ -119,9 +105,7 @@
                             </Style>
                         </TextBox.Style>
                     </TextBox>
-                    <!-- Wizualny podgląd taśmy wejściowej. Każda litera jest osobnym
-                         elementem SymbolDisplayPart. DataTrigger poniżej wyróżnia
-                         tę literę, na której aktualnie znajduje się "głowica" DFA. -->
+                    <!-- to te literki/cyferki na dole, ta co rozpatrujemy podswietlamy na niebiesko -->
                     <ItemsControl ItemsSource="{Binding InputWordSymbols}" Margin="0,0,0,10" MinHeight="24">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
@@ -160,9 +144,7 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
 
-                    <!-- Przyciski trybu krokowego. Ich IsEnabled jest bindowane do
-                         właściwości CanPrevious/CanNext, więc code-behind decyduje,
-                         kiedy cofanie albo przejście dalej ma sens. -->
+                    <!-- Przyciski do symulacji, IsEnabled jest wtedy true gdy nie robimy automatycznej symulacji -->
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                         <Button Content="Previous" Click="Previous_Click" Padding="5" Margin="0,0,10,0" IsEnabled="{Binding CanPrevious}" />
                         <Button Content="Next" Click="Next_Click" Padding="5" IsEnabled="{Binding CanNext}" />
@@ -196,11 +178,9 @@
                 </StackPanel>
             </ScrollViewer>
         </Border>
-        <!-- tutaj zajmujemy sie prawa strona a wiec canvasem-->
+        <!-- Płótno z automatami -->
         <Grid x:Name="CanvasHost" Grid.Column="1" Background="White" MouseLeftButtonDown="Canvas_MouseLeftButtonDown">
-            <!-- Warstwa przejść jest rysowana przed stanami, żeby linie i strzałki
-                 znajdowały się pod okręgami. Każdy Transition dostarcza gotową
-                 geometrię PathGeometry, punkty strzałki oraz pozycję etykiety. -->
+            <!-- W wpf to co narysujemy najpierw jest przed wiec najpierw strzalki-->
             <ItemsControl ItemsSource="{Binding MyAutomaton.Transitions}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
@@ -211,8 +191,11 @@
                     <DataTemplate>
                         <Canvas>
                             <!-- Path rysuje linię lub krzywą przejścia. Dane geometrii
-                                 są liczone w klasie Transition na podstawie pozycji
-                                 stanów źródłowego i docelowego. -->
+                                 są liczone w klasie Transition na podstawie pozycji stanów źródłowego i docelowego. -->
+                            <Path Data="{Binding PathGeometry}"
+                                  Stroke="Transparent"
+                                  StrokeThickness="12"
+                                  MouseLeftButtonDown="Transition_MouseLeftButtonDown" />
                             <Path Data="{Binding PathGeometry}" MouseLeftButtonDown="Transition_MouseLeftButtonDown">
                                 <Path.Style>
                                     <Style TargetType="Path">
@@ -231,9 +214,7 @@
                                     </Style>
                                 </Path.Style>
                             </Path>
-                            <!-- Polygon jest grotem strzałki. Punkty trójkąta są
-                                 przeliczane razem z geometrią przejścia, więc grot
-                                 obraca się zgodnie z kierunkiem krawędzi. -->
+                            <!--grot strzalki -->
                             <Polygon Points="{Binding ArrowPoints}" MouseLeftButtonDown="Transition_MouseLeftButtonDown">
                                 <Polygon.Style>
                                     <Style TargetType="Polygon">
@@ -250,9 +231,7 @@
                                 </Polygon.Style>
                             </Polygon>
 
-                            <!-- Etykieta przejścia również jest ItemsControl. Dzięki
-                                 temu aktywny symbol etykiety można wyróżnić kolorem
-                                 bez zmieniania samego tekstu etykiety w modelu. -->
+                            <!-- Etykieta przejścia również jest ItemsControl. Bo dzieki temu tez mozna ja pokolorowac przy symulacji -->
                             <ItemsControl ItemsSource="{Binding SymbolParts}"
                                           Canvas.Left="{Binding TextX}"
                                           Canvas.Top="{Binding TextY}"
@@ -295,13 +274,11 @@
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
-            <!-- Warstwa stanów. ContentPresenter dostaje Canvas.Left/Canvas.Top z
-                 właściwości X/Y stanu. W modelu X/Y traktujemy jako środek okręgu,
-                 dlatego wewnętrzny Grid ma ujemny margines równy promieniowi. -->
-            <ItemsControl ItemsSource="{Binding MyAutomaton.States}" Background="Transparent">
+            <!-- Warstwa kolek. -->
+            <ItemsControl ItemsSource="{Binding MyAutomaton.States}" Background="{x:Null}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <Canvas Background="Transparent" />
+                        <Canvas Background="{x:Null}" />
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
 
@@ -348,8 +325,7 @@
                                 </Ellipse.Style>
                             </Ellipse>
 
-                            <!-- Drugi, mniejszy okrąg oznacza stan akceptujący,
-                                 zgodnie z klasyczną notacją automatów skończonych. -->
+                            <!-- Drugi, mniejszy okrąg oznacza ze stan jest akceptujący -->
                             <Ellipse x:Name="AcceptingCircle" 
                      Width="{Binding AcceptingDiameter}" Height="{Binding AcceptingDiameter}" 
                      Stroke="{Binding StrokeBrush}" StrokeThickness="{Binding StrokeThickness}" 

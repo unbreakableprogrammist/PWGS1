@@ -15,16 +15,16 @@ namespace AutomatonEditor
 {
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
-        // 1. Główny obiekt naszego automatu. To on przechowuje listę States i Transitions.
+        // Główny obiekt naszego automatu. To on przechowuje listę States i Transitions.
         public Automaton MyAutomaton { get; set; } = new Automaton();
 
-        // 2. Licznik do automatycznego numerowania stanów (np. q0, q1, q2...)
+        // Licznik do automatycznego numerowania stanów 
         private int _stateCounter;
 
-        private bool _isDragging;                   // Czy aktualnie coś przesuwamy?
-        private Point _lastMousePosition;           // Gdzie ostatnio była myszka?
-        private State? _draggedState;               // Który stan (model) przesuwamy?
-        private FrameworkElement? _draggedElement;  // Który element graficzny na ekranie przesuwamy?
+        private bool _isDragging;                   // Czy aktualnie coś przesuwamy
+        private Point _lastMousePosition;           // Gdzie ostatnio była myszka
+        private State? _draggedState;               // Który stan (model) przesuwamy
+        private FrameworkElement? _draggedElement;  // Który element graficzny na ekranie przesuwamy
 
         // Zaznaczenia w UI (stan i przejście).
         private State? _selectedState; // Przechowuje aktualnie wybrany stan (jeśli jest jakiś wybrany)
@@ -66,8 +66,8 @@ namespace AutomatonEditor
             }
         }
 
-        // Flagi pomocnicze do włączania/wyłączania kontrolek.
-        public bool IsStateSelected => SelectedState != null; // Czy jakiś stan jest wybrany? (przydatne do włączania/wyłączania przycisków)
+        // Flagi pomocnicze 
+        public bool IsStateSelected => SelectedState != null; // Czy jakiś stan jest wybrany? 
         public bool IsTransitionSelected => SelectedTransition != null;
 
         // Słowo wejściowe do symulacji.
@@ -107,9 +107,7 @@ namespace AutomatonEditor
         }
 
         // Logika aktywności przycisków symulacji.
-        // Te właściwości są bindowane do IsEnabled przycisków. Dzięki temu stan UI
-        // wynika bezpośrednio ze stanu symulacji: Previous nie działa na pierwszej
-        // literze, Next nie działa po końcu słowa, a Start jest blokowany podczas animacji.
+        // Te właściwości są bindowane do IsEnabled przycisków. Dzięki temu stan UI czyta sobie stad,Start jest blokowany podczas animacji.
         public bool CanPrevious => _currentState != null && _currentIndex > 0 && !_isSimulationRunning;
         public bool CanNext => _currentState != null && _isInputValid && _currentIndex < InputWord.Length && !_isSimulationRunning;
         public bool CanStart => _currentState != null
@@ -119,13 +117,10 @@ namespace AutomatonEditor
         public bool CanStop => _isSimulationRunning;
         public bool CanReset => _currentState != null && !_isSimulationRunning;
 
-        // Czy można edytować słowo wejściowe.
-        // Pole jest blokowane po pierwszym kroku albo po uruchomieniu animacji.
-        // To jest ważne, bo zmiana słowa w połowie obliczeń unieważniłaby historię
-        // stanów i bieżący indeks głowicy.
+        // blokujemy slowo gdy dziala symulacja
         public bool IsInputLocked => _hasSimulationStarted || _isSimulationRunning;
 
-        // Flaga walidacji słowa (koloruje pole na czerwono).
+        // Flaga ktora mowi czy slowo jest valid
         public bool IsInputValid
         {
             get => _isInputValid;
@@ -148,7 +143,7 @@ namespace AutomatonEditor
             }
         }
 
-        // Tekstowy status na dole panelu symulacji.
+        // status na dole symulacji 
         public string SimulationStatus
         {
             get => _simulationStatus;
@@ -161,7 +156,7 @@ namespace AutomatonEditor
 
         // Lista historii kroków.
         public ObservableCollection<HistoryEntry> History => _history;
-        // Tekstowy podgląd alfabetu z etykiet przejść.
+        // tworzy alfabet na podstawie strzalek 
         public string AlphabetDisplay
         {
             get
@@ -198,20 +193,17 @@ namespace AutomatonEditor
             UpdateTimerInterval();
         }
 
-        // ====================================================================
-        // METODA 1: Obsługa kliknięcia w puste płótno (Canvas)
-        // ====================================================================
+        
         // Obsługa kliknięć w tło płótna.
         private void Canvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             // Podwójne kliknięcie w pusty obszar tworzy nowy stan.
             if (e.ClickCount == 2)
             {
-                // Pozycja z CanvasHost staje się środkiem okręgu stanu.
+                // Pozycja z canvas staje się środkiem okręgu stanu.
                 Point position = e.GetPosition((IInputElement)sender);
 
-                // Pierwszy stan w niepustym DFA powinien być początkowy, żeby
-                // automat od razu miał poprawnie określone q0.
+                // Pierwszy stan jest poczatkowy 
                 var isFirstState = MyAutomaton.States.Count == 0;
                 var newState = new State
                 {
@@ -221,8 +213,6 @@ namespace AutomatonEditor
                     IsInitial = isFirstState
                 };
 
-                // Dodanie do ObservableCollection wystarczy, żeby ItemsControl
-                // narysował nowy element na płótnie.
                 MyAutomaton.States.Add(newState);
                 if (isFirstState)
                 {
@@ -247,20 +237,14 @@ namespace AutomatonEditor
             }
         }
 
-        // ====================================================================
-        // METODA 2: Obsługa pojedynczego kliknięcia w konkretny stan (kółko)
-        // ====================================================================
         // e - to obiekt, który zawiera wszystkie informacje o kliknięciu (np. gdzie było, ile razy, itp.)
         // Kliknięcie w stan – zaznaczenie i start przesuwania.
         private void State_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            // Zdarzenia myszy w WPF bąbelkują od elementu klikniętego do rodziców.
-            // Oznaczenie Handled zatrzymuje zdarzenie na stanie, więc kliknięcie
-            // w okrąg nie trafia dalej do CanvasHost i nie czyści zaznaczenia.
+            // zeby nie szlo "glebiej"
             e.Handled = true;
 
-            // Najpierw odznaczamy inne stany, bo panel edycji pracuje na jednym
-            // aktywnym stanie naraz.
+            // Najpierw odznaczamy inne stany, bo panel edycji pracuje na jednym stanie aktywnym stanie naraz.
             foreach (var state in MyAutomaton.States)
             {
                 state.IsSelected = false;
@@ -268,16 +252,14 @@ namespace AutomatonEditor
 
             ClearTransitionSelection();
 
-            // Sender to element Grid z DataTemplate stanu. Jego DataContext to
-            // konkretny obiekt State, który został narysowany przez ItemsControl.
+            // wyciagamy sobie ktory stan byl klikniety
             var grid = (FrameworkElement)sender;
-
             var clickedState = (State)grid.DataContext;
 
             // Zmiana IsSelected uruchamia DataTrigger w XAML-u i zmienia obramowanie.
             clickedState.IsSelected = true;
             SelectedState = clickedState;
-            _isDragging = true;
+            _isDragging = true; // do przeciagania stanu
             _draggedState = clickedState;
             _draggedElement = grid;
             _lastMousePosition = e.GetPosition(this);
@@ -396,15 +378,7 @@ namespace AutomatonEditor
             }
         }
 
-        // Parsuje etykietę przejścia jako listę pojedynczych symboli: a,b,c.
-        //
-        // W DFA etykieta przejścia reprezentuje litery alfabetu, dla których
-        // funkcja przejścia delta(q, symbol) prowadzi do tego samego stanu.
-        // Ten parser wymusza prosty format używany w UI i w JSON:
-        // - symbole są rozdzielone przecinkami,
-        // - każdy symbol jest pojedynczym znakiem,
-        // - w jednej etykiecie nie wolno powtórzyć symbolu,
-        // - białe znaki są odrzucane, żeby zapis był jednoznaczny.
+        // bierze tekst z etykiety i rozbicie na zrozumiale literki( i usuniecie whitespace itd itd ) 
         private static IReadOnlyList<string> ParseTransitionSymbols(string label)
         {
             if (string.IsNullOrWhiteSpace(label))
@@ -438,10 +412,7 @@ namespace AutomatonEditor
             return symbols;
         }
 
-        // Sprawdza, czy nowe symbole nie łamią determinizmu dla stanu źródłowego.
-        // Definicja DFA wymaga, żeby dla pary (stan, symbol) istniało najwyżej
-        // jedno przejście. Przykład konfliktu: z q0 mamy już przejście opisane
-        // "a,b", więc nie wolno dodać drugiego przejścia z q0 z etykietą "b,c".
+        // sprawdza czy nie ma juz moze krawedzi o tym samym labelu 
         private void ValidateNoTransitionConflict(State sourceState, IEnumerable<string> symbols)
         {
             var newSymbols = new HashSet<string>(symbols, StringComparer.Ordinal);
@@ -463,10 +434,7 @@ namespace AutomatonEditor
             }
         }
 
-        // Waliduje, czy aktualny automat spełnia warunek determinizmu.
-        // Używane przed eksportem i symulacją jako dodatkowe zabezpieczenie.
-        // Nawet jeśli UI blokuje konflikty przy dodawaniu, importowany JSON mógłby
-        // zawierać niepoprawne dane, dlatego sprawdzamy cały automat ponownie.
+        // sprawdza czy ten automat jest deterministyczny.
         private void ValidateCurrentAutomatonDeterminism()
         {
             var symbolsByState = new Dictionary<State, HashSet<string>>();
@@ -553,8 +521,6 @@ namespace AutomatonEditor
 
                 // Dodajemy do kolekcji w naszym automacie
                 MyAutomaton.Transitions.Add(newTransition);
-
-                // Opcjonalnie: czyścimy pole tekstowe po dodaniu
                 TextSymbol.Clear();
                 OnPropertyChanged(nameof(AlphabetDisplay));
                 RefreshSimulationState();
@@ -571,7 +537,7 @@ namespace AutomatonEditor
             var dialog = new OpenFileDialog
             {
                 Filter = "Pliki JSON (*.json)|*.json|Wszystkie pliki (*.*)|*.*",
-                InitialDirectory = GetSamplesDirectory()
+                InitialDirectory = GetSamplesDirectory() //otwieramy pierwszy katalog, w którym znajdziemy przykładowy plik automaton.json (jeśli istnieje)
             };
 
             if (dialog.ShowDialog() != true)
@@ -581,9 +547,9 @@ namespace AutomatonEditor
 
             try
             {
-                var json = File.ReadAllText(dialog.FileName);
-                var data = AutomatonSerializer.Deserialize(json);
-                LoadFromData(data);
+                var json = File.ReadAllText(dialog.FileName); // czytamy tekst z pliku ktory byl zaznaczany
+                var data = AutomatonSerializer.Deserialize(json); // deserialisujemy tekst do obiektu AutomatonData
+                LoadFromData(data); // rysuje zdeserializowane stany na ekran 
             }
             catch (Exception ex)
             {
@@ -659,7 +625,7 @@ namespace AutomatonEditor
             encoder.Save(stream);
         }
 
-        // Zasilenie modelu na podstawie danych JSON.
+        // bierzemy dane z json i wrzucamy do naszych list stanow i przejsc ( xaml bedzie wiedzial co dalej zrobic bo jest on propertychanged i ma bindowanie )
         private void LoadFromData(AutomatonData data)
         {
             ValidateData(data);
@@ -782,13 +748,7 @@ namespace AutomatonEditor
             return data;
         }
 
-        // Walidacja danych z JSON (spójność stanów/przejść).
-        //
-        // Import nie powinien ufać plikowi wejściowemu. Sprawdzamy najpierw
-        // poprawność stanów: unikalne identyfikatory, unikalne nazwy, dodatni
-        // promień i dodatnią grubość krawędzi. Następnie sprawdzamy przejścia:
-        // muszą wskazywać istniejące stany, mieć poprawne etykiety i nie mogą
-        // naruszać determinizmu DFA.
+        // walidujemy dane z json 
         private void ValidateData(AutomatonData data)
         {
             if (data.States.Count == 0)
@@ -837,9 +797,6 @@ namespace AutomatonEditor
                 throw new InvalidOperationException("Plik musi zawierać dokładnie jeden stan początkowy.");
             }
 
-            // Dla każdego stanu źródłowego zapamiętujemy zbiór symboli, które już
-            // wystąpiły na jego wyjściach. HashSet.Add zwraca false, gdy symbol
-            // był już widziany, co jest dokładnie konfliktem determinizmu.
             var transitionsBySourceAndSymbol = new Dictionary<int, HashSet<string>>();
             foreach (var transition in data.Transitions)
             {
@@ -934,9 +891,6 @@ namespace AutomatonEditor
                 return;
             }
 
-            // Pierwsze naciśnięcie Next rozpoczyna obliczenie w trybie krokowym.
-            // Od tego momentu blokujemy edycję słowa wejściowego, żeby użytkownik
-            // nie zmienił taśmy po wykonaniu części ruchów automatu.
             _hasSimulationStarted = true;
             StepForward();
         }
@@ -953,9 +907,6 @@ namespace AutomatonEditor
                 return;
             }
 
-            // Puste słowo epsilon nie wykonuje żadnego przejścia. Automat od razu
-            // zatrzymuje się w stanie początkowym, więc wystarczy ocenić, czy ten
-            // stan należy do zbioru stanów akceptujących F.
             _hasSimulationStarted = true;
             if (InputWord.Length == 0)
             {
@@ -991,7 +942,7 @@ namespace AutomatonEditor
             ResetSimulationState();
             RefreshSimulationState();
         }
-
+        // to odpala sie co tick timera ( czyli podczas symulacji ) i wykonuje krok symulacji do przodu
         private void SimulationTimer_Tick(object? sender, EventArgs e)
         {
             if (_currentState == null || !_isInputValid || _currentIndex >= InputWord.Length)
@@ -1004,11 +955,7 @@ namespace AutomatonEditor
 
             StepForward();
         }
-
-        // Wykonuje dokładnie jeden krok obliczenia DFA.
-        // Głowica czyta symbol InputWord[_currentIndex], szukamy przejścia
-        // delta(_currentState, symbol), przechodzimy do stanu docelowego i dopiero
-        // wtedy przesuwamy indeks głowicy o jedną pozycję w prawo.
+        // nastepny krok symulacji 
         private void StepForward()
         {
             if (_currentState == null)
@@ -1032,8 +979,6 @@ namespace AutomatonEditor
                 return;
             }
 
-            // Te dwie właściwości nie zmieniają funkcji przejścia, tylko sterują
-            // wizualnym wyróżnieniem aktywnej krawędzi i aktywnego symbolu etykiety.
             _currentTransition = transition;
             _currentTransition.ActiveSymbol = symbol;
             _currentState = transition.Target;
@@ -1092,14 +1037,11 @@ namespace AutomatonEditor
             _currentIndex = 0;
             _currentTransition = null;
             _currentState = MyAutomaton.States.FirstOrDefault(state => state.IsInitial);
-            _history.Clear(); // Keep simulation reset after history update
+            _history.Clear(); 
             SimulationStatus = string.Empty;
         }
 
-        // Synchronizuje model symulacji z widokiem.
-        // Zmiana IsActive na stanach/przejściach uruchamia triggery w XAML-u,
-        // a OnPropertyChanged odświeża przyciski, blokadę pola tekstowego i
-        // wizualne wyróżnienie aktualnej litery wejścia.
+
         private void RefreshSimulationState()
         {
             ValidateInputWord();
@@ -1127,11 +1069,7 @@ namespace AutomatonEditor
             OnPropertyChanged(nameof(IsInputValid));
         }
 
-        // Waliduje słowo wejściowe względem alfabetu aktualnego automatu.
-        // Alfabet nie jest wpisywany ręcznie: wyznaczamy go jako sumę wszystkich
-        // symboli występujących na etykietach przejść. Jeżeli użytkownik wpisze
-        // literę spoza tego zbioru, symulacja jest blokowana, a pole dostaje
-        // czerwone obramowanie przez DataTrigger w XAML-u.
+        // waliduje wejsciowego stringa 
         private void ValidateInputWord()
         {
             if (string.IsNullOrEmpty(InputWord))
@@ -1226,11 +1164,6 @@ namespace AutomatonEditor
             SelectedState = null;
         }
 
-        // Ustawia łuki, gdy są przejścia w obie strony.
-        // Proste przejścia q_i -> q_j i q_j -> q_i rysowane tym samym odcinkiem
-        // nakładałyby się na siebie. Dlatego nadajemy im przeciwne CurveOffset:
-        // jeden łuk odgina się w jedną stronę, drugi w przeciwną. Sama geometria
-        // łuku jest potem liczona w Transition.RefreshGeometry().
         private void UpdateTransitionOffsets(State source, State target, Transition? newTransition)
         {
             var candidates = new List<Transition>();
