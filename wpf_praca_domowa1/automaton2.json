@@ -1,0 +1,66 @@
+{
+  "Meta": {
+    "Description": "Automaton export",
+    "Alphabet": [
+      "0",
+      "1"
+    ],
+    "Created": "2026-05-22T14:23:00.0142908+00:00"
+  },
+  "States": [
+    {
+      "Id": 0,
+      "Name": "q0",
+      "IsStart": true,
+      "IsAccepting": false,
+      "Position": {
+        "X": 200.40000000000003,
+        "Y": 176.44
+      },
+      "Appearance": {
+        "Radius": 25,
+        "FillColor": "#FFADD8E6",
+        "StrokeColor": "#FF000000",
+        "StrokeThickness": 2
+      }
+    },
+    {
+      "Id": 1,
+      "Name": "q1",
+      "IsStart": false,
+      "IsAccepting": false,
+      "Position": {
+        "X": 289.20000000000005,
+        "Y": 323.64000000000004
+      },
+      "Appearance": {
+        "Radius": 25,
+        "FillColor": "#FFADD8E6",
+        "StrokeColor": "#FF000000",
+        "StrokeThickness": 2
+      }
+    }
+  ],
+  "Transitions": [
+    {
+      "FromStateId": 0,
+      "ToStateId": 1,
+      "Symbol": "0"
+    },
+    {
+      "FromStateId": 1,
+      "ToStateId": 0,
+      "Symbol": "0"
+    },
+    {
+      "FromStateId": 0,
+      "ToStateId": 0,
+      "Symbol": "1"
+    },
+    {
+      "FromStateId": 1,
+      "ToStateId": 1,
+      "Symbol": "1"
+    }
+  ]
+}

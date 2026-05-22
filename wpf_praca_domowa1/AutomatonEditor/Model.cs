@@ -21,10 +21,14 @@ public class State : INotifyPropertyChanged
     private double _x, _y;
     private bool _isInitial, _isAccepting, _isSelected;
     private bool _isActive;
+    private bool _isFillColorTextValid = true;
+    private bool _isStrokeColorTextValid = true;
     private double _radius = 25;
     private double _strokeThickness = 2;
     private Brush _fillBrush = Brushes.LightBlue;
     private Brush _strokeBrush = Brushes.Black;
+    private string _fillColorText = BrushToColorText(Brushes.LightBlue);
+    private string _strokeColorText = BrushToColorText(Brushes.Black);
     // Nazwa stanu, np. q0, q1.
     public string? Name { get; set; }
     public double X { get => _x; set { _x = value; OnPropertyChanged(); } }
@@ -75,7 +79,10 @@ public class State : INotifyPropertyChanged
         set
         {
             _fillBrush = value;
+            _fillColorText = BrushToColorText(value);
+            IsFillColorTextValid = true;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(FillColorText));
         }
     }
 
@@ -85,9 +92,138 @@ public class State : INotifyPropertyChanged
         set
         {
             _strokeBrush = value;
+            _strokeColorText = BrushToColorText(value);
+            IsStrokeColorTextValid = true;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(StrokeColorText));
+        }
+    }
+
+    public string FillColorText
+    {
+        get => _fillColorText;
+        set
+        {
+            _fillColorText = value ?? string.Empty;
+            if (TryParseColorBrush(_fillColorText, out var brush))
+            {
+                _fillBrush = brush;
+                IsFillColorTextValid = true;
+                OnPropertyChanged(nameof(FillBrush));
+            }
+            else
+            {
+                IsFillColorTextValid = false;
+            }
+
             OnPropertyChanged();
         }
     }
+
+    public string StrokeColorText
+    {
+        get => _strokeColorText;
+        set
+        {
+            _strokeColorText = value ?? string.Empty;
+            if (TryParseColorBrush(_strokeColorText, out var brush))
+            {
+                _strokeBrush = brush;
+                IsStrokeColorTextValid = true;
+                OnPropertyChanged(nameof(StrokeBrush));
+            }
+            else
+            {
+                IsStrokeColorTextValid = false;
+            }
+
+            OnPropertyChanged();
+        }
+    }
+
+    public bool IsFillColorTextValid
+    {
+        get => _isFillColorTextValid;
+        private set
+        {
+            _isFillColorTextValid = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public bool IsStrokeColorTextValid
+    {
+        get => _isStrokeColorTextValid;
+        private set
+        {
+            _isStrokeColorTextValid = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private static bool TryParseColorBrush(string? text, out Brush brush)
+    {
+        brush = Brushes.Transparent;
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return false;
+        }
+
+        var normalizedText = NormalizeColorText(text.Trim());
+        try
+        {
+            if (ColorConverter.ConvertFromString(normalizedText) is Color color)
+            {
+                brush = new SolidColorBrush(color);
+                return true;
+            }
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+        catch (NotSupportedException)
+        {
+            return false;
+        }
+
+        return false;
+    }
+
+    private static string NormalizeColorText(string text)
+    {
+        return IsBareHexColor(text) ? $"#{text}" : text;
+    }
+
+    private static bool IsBareHexColor(string text)
+    {
+        if (text.Length is not (6 or 8))
+        {
+            return false;
+        }
+
+        foreach (var character in text)
+        {
+            if (!Uri.IsHexDigit(character))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static string BrushToColorText(Brush brush)
+    {
+        var color = brush is SolidColorBrush solidColorBrush
+            ? solidColorBrush.Color
+            : Brushes.LightBlue.Color;
+
+        return color.A == byte.MaxValue
+            ? $"{color.R:X2}{color.G:X2}{color.B:X2}"
+            : $"{color.A:X2}{color.R:X2}{color.G:X2}{color.B:X2}";
+    }
+
     public event PropertyChangedEventHandler? PropertyChanged;
     protected void OnPropertyChanged([CallerMemberName] string? name = null) =>
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
