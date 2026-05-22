@@ -994,7 +994,7 @@ namespace AutomatonEditor
 
         private void SimulationTimer_Tick(object? sender, EventArgs e)
         {
-            if (!CanNext)
+            if (_currentState == null || !_isInputValid || _currentIndex >= InputWord.Length)
             {
                 _simulationTimer.Stop();
                 _isSimulationRunning = false;
