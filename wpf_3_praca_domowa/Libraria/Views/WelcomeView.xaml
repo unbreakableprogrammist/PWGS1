@@ -1,0 +1,58 @@
+<UserControl x:Class="Libraria.Views.WelcomeView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignHeight="560"
+             d:DesignWidth="1000">
+    <Grid Background="#F7F8FA">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="1"
+                Width="430"
+                Padding="36"
+                Background="White"
+                BorderBrush="#D8DDE6"
+                BorderThickness="1"
+                CornerRadius="8">
+            <StackPanel>
+                <Image Source="/Resources/book.png"
+                       Width="86"
+                       Height="86"
+                       Stretch="Uniform"
+                       HorizontalAlignment="Center"
+                       Margin="0,0,0,18" />
+
+                <TextBlock Text="Libraria"
+                           FontFamily="Segoe Script"
+                           FontSize="34"
+                           FontWeight="SemiBold"
+                           TextAlignment="Center"
+                           Foreground="{StaticResource PrimaryColor}" />
+
+                <TextBlock Text="Personal Book Manager"
+                           FontSize="14"
+                           TextAlignment="Center"
+                           Foreground="#6B7280"
+                           Margin="0,4,0,28" />
+
+                <Button Content="Utwórz nowe repozytorium"
+                        Command="{Binding CreateRepositoryCommand}"
+                        Background="{StaticResource AccentColor}"
+                        Foreground="White"
+                        FontWeight="SemiBold"
+                        Padding="16,10"
+                        Margin="0,0,0,10" />
+
+                <Button Content="Otwórz istniejące repozytorium"
+                        Command="{Binding OpenRepositoryCommand}"
+                        Padding="16,10" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

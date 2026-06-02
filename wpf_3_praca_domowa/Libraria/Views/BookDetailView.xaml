@@ -1,0 +1,120 @@
+<UserControl x:Class="Libraria.Views.BookDetailView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:Libraria.Controls"
+             xmlns:converters="clr-namespace:Libraria.Converters"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignHeight="560"
+             d:DesignWidth="1000">
+    <UserControl.Resources>
+        <converters:ByteArrayToImageConverter x:Key="ByteArrayToImageConverter" />
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    </UserControl.Resources>
+
+    <Grid Background="#F7F8FA">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <Grid Margin="28">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="240" />
+                    <ColumnDefinition Width="32" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <Border Width="200"
+                            Height="280"
+                            Background="#E6E8EC"
+                            BorderBrush="#C6CAD1"
+                            BorderThickness="1"
+                            HorizontalAlignment="Left"
+                            ClipToBounds="True">
+                        <Grid>
+                            <Image Source="{Binding Book.CoverImage, Converter={StaticResource ByteArrayToImageConverter}}"
+                                   Stretch="UniformToFill" />
+                            <TextBlock Text="No Cover"
+                                       Foreground="#6B7280"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Book.CoverImage.Length}" Value="0">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
+                    </Border>
+
+                    <controls:RatingControl Value="{Binding Book.Rating}"
+                                            IsReadOnly="True"
+                                            Margin="0,14,0,0" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="{Binding Title}"
+                               FontSize="30"
+                               FontWeight="SemiBold"
+                               TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding Author}"
+                               FontSize="17"
+                               Foreground="#6B7280"
+                               Margin="0,4,0,14" />
+
+                    <TextBlock Text="{Binding Book.Status, StringFormat=Status: {0}}"
+                               Foreground="#374151"
+                               Margin="0,0,0,8" />
+
+                    <TextBlock Text="{Binding ProgressText}"
+                               Foreground="#374151"
+                               Visibility="{Binding HasPageCount, Converter={StaticResource BooleanToVisibilityConverter}}"
+                               Margin="0,0,0,18" />
+
+                    <TextBlock Text="{Binding Description}"
+                               TextWrapping="Wrap"
+                               FontSize="15"
+                               LineHeight="23"
+                               Visibility="{Binding HasDescription, Converter={StaticResource BooleanToVisibilityConverter}}"
+                               Margin="0,0,0,18" />
+
+                    <StackPanel Visibility="{Binding HasTags, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                Margin="0,0,0,18">
+                        <TextBlock Text="Tags"
+                                   FontWeight="SemiBold"
+                                   Margin="0,0,0,6" />
+                        <controls:TagControl Tags="{Binding Book.Tags}"
+                                             IsEditable="False" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="Czytaj od początku"
+                                Command="{Binding ReadFromStartCommand}"
+                                Visibility="{Binding HasBookFile, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                Background="{StaticResource AccentColor}"
+                                Foreground="White"
+                                FontWeight="SemiBold"
+                                Padding="14,7"
+                                Margin="0,0,8,0" />
+                        <Button Content="Kontynuuj czytanie"
+                                Command="{Binding ContinueReadingCommand}"
+                                Visibility="{Binding CanContinueReading, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                Padding="14,7"
+                                Margin="0,0,8,0" />
+                        <Button Content="Edytuj"
+                                Command="{Binding EditCommand}"
+                                Padding="14,7"
+                                Margin="0,0,8,0" />
+                        <Button Content="Wstecz"
+                                Command="{Binding BackCommand}"
+                                Padding="14,7" />
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

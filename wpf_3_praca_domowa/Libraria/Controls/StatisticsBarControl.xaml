@@ -1,0 +1,33 @@
+<UserControl x:Class="Libraria.Controls.StatisticsBarControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Name="Root">
+    <Border Background="#EEF0F3"
+            BorderBrush="#D5D9E0"
+            BorderThickness="0,1,0,0">
+        <Grid Margin="10,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Orientation="Horizontal"
+                        VerticalAlignment="Center">
+                <TextBlock Text="{Binding TotalBooks, ElementName=Root, StringFormat=Books: {0}}"
+                           Margin="0,0,16,0" />
+                <TextBlock Text="{Binding ReadBooks, ElementName=Root, StringFormat=Read: {0}}"
+                           Margin="0,0,16,0" />
+                <TextBlock Text="{Binding InProgressBooks, ElementName=Root, StringFormat=In progress: {0}}"
+                           Margin="0,0,16,0" />
+                <TextBlock Text="{Binding AverageRating, ElementName=Root, StringFormat=Avg: {0}}"
+                           Margin="0,0,16,0" />
+                <TextBlock Text="{Binding TopGenre, ElementName=Root, StringFormat=Top genre: {0}}" />
+            </StackPanel>
+
+            <TextBlock Grid.Column="1"
+                       Text="{Binding StatusMessage, ElementName=Root}"
+                       VerticalAlignment="Center"
+                       TextTrimming="CharacterEllipsis" />
+        </Grid>
+    </Border>
+</UserControl>

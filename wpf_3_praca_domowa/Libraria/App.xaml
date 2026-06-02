@@ -1,0 +1,12 @@
+<Application x:Class="Libraria.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Libraria"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <SolidColorBrush x:Key="PrimaryColor" Color="#2D4059" />
+            <SolidColorBrush x:Key="AccentColor" Color="#EA5455" />
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>
