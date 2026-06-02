@@ -42,25 +42,25 @@ namespace Libraria.Models
         public string Title
         {
             get => _title;
-            set => SetProperty(ref _title, value);
+            set => SetProperty(ref _title, value ?? string.Empty);
         }
 
         public string Author
         {
             get => _author;
-            set => SetProperty(ref _author, value);
+            set => SetProperty(ref _author, value ?? string.Empty);
         }
 
         public string Description
         {
             get => _description;
-            set => SetProperty(ref _description, value);
+            set => SetProperty(ref _description, value ?? string.Empty);
         }
 
         public string Genre
         {
             get => _genre;
-            set => SetProperty(ref _genre, value);
+            set => SetProperty(ref _genre, value ?? string.Empty);
         }
 
         public ObservableCollection<string> Tags
@@ -72,7 +72,7 @@ namespace Libraria.Models
         public int Rating
         {
             get => _rating;
-            set => SetProperty(ref _rating, value);
+            set => SetProperty(ref _rating, Math.Clamp(value, 0, 5));
         }
 
         public BookStatus Status
@@ -90,25 +90,25 @@ namespace Libraria.Models
         public string CoverImagePath
         {
             get => _coverImagePath;
-            set => SetProperty(ref _coverImagePath, value);
+            set => SetProperty(ref _coverImagePath, value ?? string.Empty);
         }
 
         public string FilePath
         {
             get => _filePath;
-            set => SetProperty(ref _filePath, value);
+            set => SetProperty(ref _filePath, value ?? string.Empty);
         }
 
         public int CurrentPage
         {
             get => _currentPage;
-            set => SetProperty(ref _currentPage, value);
+            set => SetProperty(ref _currentPage, Math.Max(1, value));
         }
 
         public int PageCount
         {
             get => _pageCount;
-            set => SetProperty(ref _pageCount, value);
+            set => SetProperty(ref _pageCount, Math.Max(0, value));
         }
 
         public DateTime CreatedAt

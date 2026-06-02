@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using Libraria.Models;
+using Libraria.Services;
 using Microsoft.Win32;
 
 namespace Libraria.ViewModels
@@ -12,6 +13,8 @@ namespace Libraria.ViewModels
     {
         private readonly Book _book;
         private readonly bool _isNewBook;
+        private readonly MarkdownBookContentService _bookContentService;
+        private readonly string _originalFilePath;
         private string _title = string.Empty;
         private string _author = string.Empty;
         private string _description = string.Empty;
@@ -24,10 +27,15 @@ namespace Libraria.ViewModels
         private string _filePath = string.Empty;
         private int _pageCount;
 
-        public BookEditViewModel(Book book, bool isNewBook = false)
+        public BookEditViewModel(
+            Book book,
+            bool isNewBook = false,
+            MarkdownBookContentService? bookContentService = null)
         {
             _book = book;
             _isNewBook = isNewBook;
+            _bookContentService = bookContentService ?? new MarkdownBookContentService();
+            _originalFilePath = book.FilePath;
 
             Title = book.Title;
             Author = book.Author;
@@ -170,7 +178,7 @@ namespace Libraria.ViewModels
             var dialog = new OpenFileDialog
             {
                 Title = "Choose Cover Image",
-                Filter = "Image files (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg|All files (*.*)|*.*",
+                Filter = "Image files (*.png;*.jpg;*.jpeg)|*.png;*.jpg;*.jpeg",
                 CheckFileExists = true
             };
 
@@ -179,8 +187,22 @@ namespace Libraria.ViewModels
                 return;
             }
 
+            if (!IsSupportedCoverExtension(dialog.FileName))
+            {
+                return;
+            }
+
             CoverImage = File.ReadAllBytes(dialog.FileName);
             CoverImagePath = dialog.FileName;
+        }
+
+        private static bool IsSupportedCoverExtension(string fileName)
+        {
+            var extension = Path.GetExtension(fileName);
+
+            return string.Equals(extension, ".png", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(extension, ".jpg", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(extension, ".jpeg", StringComparison.OrdinalIgnoreCase);
         }
 
         private void BrowseBook()
@@ -188,13 +210,20 @@ namespace Libraria.ViewModels
             var dialog = new OpenFileDialog
             {
                 Title = "Choose Book File",
-                Filter = "Supported book files (*.md;*.epub;*.pdf)|*.md;*.epub;*.pdf|Markdown files (*.md)|*.md|EPUB files (*.epub)|*.epub|PDF files (*.pdf)|*.pdf|All files (*.*)|*.*",
+                Filter = "Markdown files (*.md)|*.md",
+                DefaultExt = ".md",
                 CheckFileExists = true
             };
 
             if (dialog.ShowDialog() == true)
             {
+                if (!string.Equals(Path.GetExtension(dialog.FileName), ".md", StringComparison.OrdinalIgnoreCase))
+                {
+                    return;
+                }
+
                 FilePath = dialog.FileName;
+                PageCount = _bookContentService.CountPages(dialog.FileName);
             }
         }
 
@@ -247,10 +276,22 @@ namespace Libraria.ViewModels
             _book.CoverImagePath = CoverImagePath;
             _book.FilePath = FilePath;
             _book.PageCount = PageCount;
-            _book.CurrentPage = Math.Max(1, _book.CurrentPage);
+            _book.CurrentPage = GetSavedCurrentPage();
             _book.UpdatedAt = DateTime.Now;
 
             CloseRequested?.Invoke(this, new CloseRequestedEventArgs(true));
+        }
+
+        private int GetSavedCurrentPage()
+        {
+            if (!string.Equals(_originalFilePath, FilePath, StringComparison.OrdinalIgnoreCase))
+            {
+                return 1;
+            }
+
+            return PageCount > 0
+                ? Math.Clamp(_book.CurrentPage, 1, PageCount)
+                : Math.Max(1, _book.CurrentPage);
         }
 
         private void Cancel()

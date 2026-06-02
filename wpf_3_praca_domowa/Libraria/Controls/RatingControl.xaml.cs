@@ -35,14 +35,10 @@ namespace Libraria.Controls
                 typeof(RatingControl),
                 new PropertyMetadata(22.0));
 
-        private readonly TextBlock[] _stars;
-
         public RatingControl()
         {
+            SetRatingCommand = new SetRatingValueCommand(this);
             InitializeComponent();
-            _stars = new[] { Star1, Star2, Star3, Star4, Star5 };
-            UpdateStars(Value);
-            UpdateCursor();
         }
 
         public int Value
@@ -63,6 +59,8 @@ namespace Libraria.Controls
             set => SetValue(StarSizeProperty, value);
         }
 
+        public ICommand SetRatingCommand { get; }
+
         private static object CoerceValue(DependencyObject d, object baseValue)
         {
             return Math.Clamp((int)baseValue, 0, 5);
@@ -70,62 +68,40 @@ namespace Libraria.Controls
 
         private static void OnRatingPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (d is not RatingControl control || control._stars is null)
-            {
-                return;
-            }
-
-            control.UpdateStars(control.Value);
-            control.UpdateCursor();
         }
 
-        private void Star_MouseEnter(object sender, MouseEventArgs e)
+        private sealed class SetRatingValueCommand : ICommand
         {
-            if (IsReadOnly || sender is not TextBlock star)
+            private readonly RatingControl _control;
+
+            public SetRatingValueCommand(RatingControl control)
             {
-                return;
+                _control = control;
             }
 
-            UpdateStars(GetStarValue(star));
-        }
-
-        private void Star_MouseLeave(object sender, MouseEventArgs e)
-        {
-            if (!IsReadOnly)
+            public event EventHandler? CanExecuteChanged
             {
-                UpdateStars(Value);
-            }
-        }
-
-        private void Star_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            if (IsReadOnly || sender is not TextBlock star)
-            {
-                return;
+                add => CommandManager.RequerySuggested += value;
+                remove => CommandManager.RequerySuggested -= value;
             }
 
-            Value = GetStarValue(star);
-        }
-
-        private void UpdateStars(int value)
-        {
-            for (var index = 0; index < _stars.Length; index++)
+            public bool CanExecute(object? parameter)
             {
-                _stars[index].Text = index < value ? "★" : "☆";
+                return true;
             }
-        }
 
-        private void UpdateCursor()
-        {
-            foreach (var star in _stars)
+            public void Execute(object? parameter)
             {
-                star.Cursor = IsReadOnly ? Cursors.Arrow : Cursors.Hand;
-            }
-        }
+                if (_control.IsReadOnly)
+                {
+                    return;
+                }
 
-        private static int GetStarValue(TextBlock star)
-        {
-            return star.Tag is string tag && int.TryParse(tag, out var value) ? value : 0;
+                if (parameter is string text && int.TryParse(text, out var value))
+                {
+                    _control.Value = value;
+                }
+            }
         }
     }
 }

@@ -171,7 +171,18 @@
                         <TextBox Text="{Binding PageCount, UpdateSourceTrigger=PropertyChanged}"
                                  Width="100"
                                  HorizontalAlignment="Left"
-                                 Padding="8,5" />
+                                 Padding="8,5">
+                            <TextBox.Style>
+                                <Style TargetType="TextBox">
+                                    <Setter Property="IsReadOnly" Value="False" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasBookFile}" Value="True">
+                                            <Setter Property="IsReadOnly" Value="True" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBox.Style>
+                        </TextBox>
                     </StackPanel>
                 </Grid>
             </Grid>

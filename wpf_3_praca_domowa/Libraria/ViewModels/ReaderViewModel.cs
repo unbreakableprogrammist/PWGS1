@@ -3,19 +3,21 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using Libraria.Models;
+using Libraria.Services;
 
 namespace Libraria.ViewModels
 {
     public class ReaderViewModel : BaseViewModel
     {
-        private const int TargetPageLength = 3500;
-
         private readonly Book _book;
         private readonly Action _goBack;
         private readonly List<string> _pages;
+        private readonly string? _baseDirectory;
         private int _currentPage;
         private FlowDocument _currentDocument = new();
 
@@ -23,7 +25,8 @@ namespace Libraria.ViewModels
         {
             _book = book;
             _goBack = goBack;
-            _pages = LoadPages(book.FilePath);
+            _pages = new MarkdownBookContentService().LoadPages(book.FilePath).ToList();
+            _baseDirectory = Path.GetDirectoryName(book.FilePath);
 
             PreviousCommand = new RelayCommand(PreviousPage, () => CanGoPrevious);
             NextCommand = new RelayCommand(NextPage, () => CanGoNext);
@@ -99,86 +102,12 @@ namespace Libraria.ViewModels
         private void SetCurrentPage(int page)
         {
             CurrentPage = page;
-            CurrentDocument = BuildDocument(_pages.Count == 0 ? "No readable Markdown content." : _pages[CurrentPage - 1]);
+            CurrentDocument = BuildDocument(
+                _pages.Count == 0 ? "No readable Markdown content." : _pages[CurrentPage - 1],
+                _baseDirectory);
         }
 
-        private static List<string> LoadPages(string filePath)
-        {
-            if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
-            {
-                return new List<string> { "The assigned Markdown file could not be found." };
-            }
-
-            var markdown = File.ReadAllText(filePath);
-            return SplitMarkdown(markdown);
-        }
-
-        private static List<string> SplitMarkdown(string markdown)
-        {
-            var normalized = markdown.Replace("\r\n", "\n");
-            var headingPages = SplitByHeadings(normalized);
-
-            if (headingPages.Count > 1)
-            {
-                return headingPages;
-            }
-
-            return SplitByLength(normalized);
-        }
-
-        private static List<string> SplitByHeadings(string markdown)
-        {
-            var pages = new List<string>();
-            var current = new List<string>();
-
-            foreach (var line in markdown.Split('\n'))
-            {
-                if (line.StartsWith("# ", StringComparison.Ordinal) && current.Count > 0)
-                {
-                    pages.Add(string.Join(Environment.NewLine, current).Trim());
-                    current.Clear();
-                }
-
-                current.Add(line);
-            }
-
-            if (current.Count > 0)
-            {
-                pages.Add(string.Join(Environment.NewLine, current).Trim());
-            }
-
-            return pages.Where(page => !string.IsNullOrWhiteSpace(page)).ToList();
-        }
-
-        private static List<string> SplitByLength(string markdown)
-        {
-            var pages = new List<string>();
-            var paragraphs = markdown.Split(new[] { "\n\n" }, StringSplitOptions.None);
-            var current = new List<string>();
-            var currentLength = 0;
-
-            foreach (var paragraph in paragraphs)
-            {
-                if (currentLength > 0 && currentLength + paragraph.Length > TargetPageLength)
-                {
-                    pages.Add(string.Join(Environment.NewLine + Environment.NewLine, current).Trim());
-                    current.Clear();
-                    currentLength = 0;
-                }
-
-                current.Add(paragraph);
-                currentLength += paragraph.Length;
-            }
-
-            if (current.Count > 0)
-            {
-                pages.Add(string.Join(Environment.NewLine + Environment.NewLine, current).Trim());
-            }
-
-            return pages.Count == 0 ? new List<string> { "No readable Markdown content." } : pages;
-        }
-
-        private static FlowDocument BuildDocument(string markdown)
+        private static FlowDocument BuildDocument(string markdown, string? baseDirectory)
         {
             var document = new FlowDocument
             {
@@ -197,6 +126,13 @@ namespace Libraria.ViewModels
                 if (string.IsNullOrWhiteSpace(line))
                 {
                     AddParagraph(document, paragraphLines);
+                    continue;
+                }
+
+                if (TryParseImage(line.Trim(), out var altText, out var imagePath))
+                {
+                    AddParagraph(document, paragraphLines);
+                    AddImage(document, altText, imagePath, baseDirectory);
                     continue;
                 }
 
@@ -219,6 +155,98 @@ namespace Libraria.ViewModels
 
             AddParagraph(document, paragraphLines);
             return document;
+        }
+
+        private static bool TryParseImage(string line, out string altText, out string imagePath)
+        {
+            altText = string.Empty;
+            imagePath = string.Empty;
+
+            if (!line.StartsWith("![", StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            var altEnd = line.IndexOf("](", StringComparison.Ordinal);
+            if (altEnd < 2 || !line.EndsWith(")", StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            altText = line[2..altEnd].Trim();
+            imagePath = line[(altEnd + 2)..^1].Trim().Trim('"');
+            return !string.IsNullOrWhiteSpace(imagePath);
+        }
+
+        private static void AddImage(FlowDocument document, string altText, string imagePath, string? baseDirectory)
+        {
+            var resolvedPath = ResolveImagePath(imagePath, baseDirectory);
+            if (string.IsNullOrWhiteSpace(resolvedPath) || !File.Exists(resolvedPath))
+            {
+                var missingText = string.IsNullOrWhiteSpace(altText)
+                    ? $"Image not found: {imagePath}"
+                    : $"Image not found: {altText}";
+                document.Blocks.Add(new Paragraph(new Run(missingText))
+                {
+                    Foreground = Brushes.Gray,
+                    FontStyle = FontStyles.Italic,
+                    Margin = new Thickness(0, 0, 0, 12)
+                });
+                return;
+            }
+
+            var bitmap = new BitmapImage();
+            using (var stream = File.OpenRead(resolvedPath))
+            {
+                bitmap.BeginInit();
+                bitmap.CacheOption = BitmapCacheOption.OnLoad;
+                bitmap.StreamSource = stream;
+                bitmap.EndInit();
+            }
+
+            bitmap.Freeze();
+
+            var image = new Image
+            {
+                Source = bitmap,
+                Stretch = Stretch.Uniform,
+                MaxWidth = 680,
+                MaxHeight = 420,
+                Margin = new Thickness(0, 4, 0, 10)
+            };
+
+            document.Blocks.Add(new BlockUIContainer(image)
+            {
+                Margin = new Thickness(0, 0, 0, 8)
+            });
+
+            if (!string.IsNullOrWhiteSpace(altText))
+            {
+                document.Blocks.Add(new Paragraph(new Run(altText))
+                {
+                    FontSize = 12,
+                    Foreground = Brushes.Gray,
+                    FontStyle = FontStyles.Italic,
+                    Margin = new Thickness(0, 0, 0, 12)
+                });
+            }
+        }
+
+        private static string ResolveImagePath(string imagePath, string? baseDirectory)
+        {
+            if (Uri.TryCreate(imagePath, UriKind.Absolute, out var uri))
+            {
+                return uri.IsFile ? uri.LocalPath : string.Empty;
+            }
+
+            if (Path.IsPathRooted(imagePath))
+            {
+                return imagePath;
+            }
+
+            return string.IsNullOrWhiteSpace(baseDirectory)
+                ? imagePath
+                : Path.GetFullPath(Path.Combine(baseDirectory, imagePath));
         }
 
         private static void AddHeading(FlowDocument document, string line)

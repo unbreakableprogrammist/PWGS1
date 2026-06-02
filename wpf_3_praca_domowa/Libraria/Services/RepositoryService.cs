@@ -221,11 +221,18 @@ namespace Libraria.Services
 
             book.Tags ??= new ObservableCollection<string>();
             book.CoverImage ??= Array.Empty<byte>();
+            book.Title ??= string.Empty;
+            book.Author ??= string.Empty;
+            book.Description ??= string.Empty;
+            book.Genre ??= string.Empty;
+            book.CoverImagePath ??= string.Empty;
+            book.FilePath ??= string.Empty;
+            book.Rating = Math.Clamp(book.Rating, 0, 5);
+            book.PageCount = Math.Max(0, book.PageCount);
 
-            if (book.CurrentPage < 1)
-            {
-                book.CurrentPage = 1;
-            }
+            book.CurrentPage = book.PageCount > 0
+                ? Math.Clamp(book.CurrentPage, 1, book.PageCount)
+                : Math.Max(1, book.CurrentPage);
         }
 
         private sealed record TagSubscription(

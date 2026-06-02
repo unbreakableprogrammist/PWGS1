@@ -22,7 +22,27 @@ namespace Libraria.Services
                     ?? Application.Current.MainWindow
             };
 
-            return window.ShowDialog() == true;
+            void OnCloseRequested(object? sender, CloseRequestedEventArgs e)
+            {
+                if (e.DialogResult.HasValue)
+                {
+                    window.DialogResult = e.DialogResult;
+                    return;
+                }
+
+                window.Close();
+            }
+
+            viewModel.CloseRequested += OnCloseRequested;
+
+            try
+            {
+                return window.ShowDialog() == true;
+            }
+            finally
+            {
+                viewModel.CloseRequested -= OnCloseRequested;
+            }
         }
     }
 }
