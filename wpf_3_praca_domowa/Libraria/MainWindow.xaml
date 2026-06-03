@@ -17,7 +17,7 @@
     <Window.InputBindings>
         <KeyBinding Key="Delete" Command="{Binding DeleteBookCommand}" />
     </Window.InputBindings>
-
+    <!--w zaleznosci jakie dane dostaniemy to wyswieltamy je w konkretny wudok z katalogu views-->
     <Window.Resources>
         <DataTemplate DataType="{x:Type vm:WelcomeViewModel}">
             <views:WelcomeView />

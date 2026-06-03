@@ -1,5 +1,6 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!--nazwane pedzle tak jak proszono w poleceniu -->
     <SolidColorBrush x:Key="PrimaryColor" Color="#2D4059" />
     <SolidColorBrush x:Key="AccentColor" Color="#EA5455" />
 </ResourceDictionary>

@@ -11,14 +11,15 @@ namespace Libraria.ViewModels
 {
     public class MainViewModel : BaseViewModel
     {
-        private readonly RepositoryService _repositoryService;
-        private readonly IBookEditDialogService _bookEditDialogService;
-        private readonly WelcomeViewModel _welcomeViewModel;
-        private readonly HashSet<Book> _trackedBooks = new();
+        private readonly RepositoryService _repositoryService; // obiekt odopowiada za ladowanie i zapisywanie danych do repozytoriun
+        private readonly IBookEditDialogService _bookEditDialogService; // obiekt ktory odpowiada za pokazanie okienka od edycji ksiazki
+        private readonly WelcomeViewModel _welcomeViewModel;  // obiekt ktory ogarnia to okienko poczatkowe 
+        private readonly HashSet<Book> _trackedBooks = new(); // ktore ksiazki obecnie sledzimy 
         private object? _currentPage;
         private Book? _selectedBook;
         private string _statusMessage = "Open or create a repository to start.";
 
+        // konstruktory 
         public MainViewModel()
             : this(new RepositoryService(), new BookEditDialogService())
         {
@@ -38,6 +39,7 @@ namespace Libraria.ViewModels
 
             CurrentPage = _welcomeViewModel;
 
+            // przypisujemy komendy 
             CreateRepositoryCommand = _welcomeViewModel.CreateRepositoryCommand;
             OpenRepositoryCommand = _welcomeViewModel.OpenRepositoryCommand;
             AddBookCommand = new RelayCommand(AddBook, () => IsRepositoryOpen);
@@ -181,7 +183,7 @@ namespace Libraria.ViewModels
                 RefreshStatistics();
             }
         }
-
+        // usuwamy ksiazke 
         private void DeleteSelectedBook()
         {
             if (SelectedBook is null)
